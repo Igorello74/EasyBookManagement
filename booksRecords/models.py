@@ -43,3 +43,11 @@ class Book(models.Model):
         help_text='Например: "математика", "русский язык", '
         '"математика углублённая"'
     )
+
+    def __str__(self):
+        return f"{self.authors}: {self.name}"
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'книга'
+        verbose_name_plural = 'книги'
