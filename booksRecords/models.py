@@ -57,3 +57,55 @@ class Book(models.Model):
         ordering = ['name']
         verbose_name = 'книга'
         verbose_name_plural = 'книги'
+
+
+class BookInstance(models.Model):
+    '''
+    Описывает каждую книгу в библиотеке,
+    каждый экземпляр.
+    '''
+    barcode = models.CharField(
+        primary_key=True,
+        unique=True,
+        max_length=8,
+        verbose_name="Штрихкод",
+        help_text="идентификатор книги, уникальный для каждого "
+        "экземпляра; совпадает с номером штрихкода на наклейке"
+    )
+
+    IN_STORAGE = 0
+    ON_HANDS = 1
+    EXPIRED = 2
+    WRITTEN_OFF = 3
+    
+    STATUSES = (
+        (IN_STORAGE, "в хранилище"),
+        (ON_HANDS, "на руках"),
+        (EXPIRED, "истёк срок возврата"),
+        (WRITTEN_OFF, "снята с учёта")
+    )
+    status = models.PositiveSmallIntegerField(
+        choices=STATUSES,
+        editable=False,
+        default=IN_STORAGE,
+        verbose_name="статус"
+    )
+    
+    
+    
+    book = models.ForeignKey(
+        "Book",
+        on_delete=models.CASCADE,
+        verbose_name="книга",
+        help_text="ссылка на модель Книга :Model:`booksRecord.Book`"
+    )
+    
+    def __str__(self):
+        return str(self.book)
+    
+    class Meta:
+        ordering = ["barcode"]
+        indexes = [models.Index(fields=['status'])]
+        verbose_name = "экземпляр книги"
+        verbose_name_plural = "экземпляры книг"
+        
