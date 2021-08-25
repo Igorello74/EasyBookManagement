@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 
 class Book(models.Model):
     """
@@ -48,6 +47,13 @@ class Book(models.Model):
         return f"{self.authors}: {self.name}"
 
     class Meta:
+        indexes = [
+            models.Index(fields=["name"]),
+            models.Index(fields=['authors']),
+            models.Index(fields=['isbn']),
+            models.Index(fields=['inventory_number']),
+            models.Index(fields=["grade", "subject"])
+        ]
         ordering = ['name']
         verbose_name = 'книга'
         verbose_name_plural = 'книги'
