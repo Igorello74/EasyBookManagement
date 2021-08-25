@@ -59,6 +59,12 @@ class Reader(models.Model):
         blank=True,
     )
     
+    def __str__(self):
+        if self.role == self.STUDENT:
+            return f"{self.name}, {self.group}"
+        else:
+            return self.name
+
     class Meta:
         indexes = (
             models.Index(fields=['name']),
