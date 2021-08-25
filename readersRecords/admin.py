@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Reader
+
+@admin.register(Reader)
+class ReaderAdmin(admin.ModelAdmin):
+    list_display = ("role", "name", "group")
+    search_fields = ("name", 'group')
