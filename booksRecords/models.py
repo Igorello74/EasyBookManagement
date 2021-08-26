@@ -1,5 +1,7 @@
 from django.db import models
 
+import readersRecords.models
+
 
 class Book(models.Model):
     """
@@ -91,6 +93,10 @@ class BookInstance(models.Model):
         verbose_name="статус"
     )
     
+    notes = models.TextField(
+        verbose_name="заметки",
+        blank=True
+    )
     
     
     book = models.ForeignKey(
@@ -100,12 +106,25 @@ class BookInstance(models.Model):
         help_text="ссылка на модель Книга :Model:`booksRecord.Book`"
     )
     
+    taken_by = models.ForeignKey(
+        readersRecords.models.Reader,
+        on_delete=models.PROTECT,
+        verbose_name='взята',
+        help_text="Читатель, взявший книгу",
+        blank=True, null=True
+    )
+
     def __str__(self):
         return str(self.book)
     
     class Meta:
         ordering = ["barcode"]
-        indexes = [models.Index(fields=['status'])]
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['taken_by']),
+            models.Index(fields=['book']),
+
+        ]
         verbose_name = "экземпляр книги"
         verbose_name_plural = "экземпляры книг"
         
