@@ -40,6 +40,6 @@ class BookAdmin(admin.ModelAdmin):
 
 @admin.register(models.BookInstance)
 class BookInstanceAdmin(admin.ModelAdmin):
-    list_display = ('barcode', 'book', 'status',)
+    list_display = ('barcode', 'book', 'status','taken_by')
     readonly_fields = ('status',)
-    fields = ('status', 'barcode', 'book')
+    fields = ('status', 'barcode', 'book', 'taken_by')
