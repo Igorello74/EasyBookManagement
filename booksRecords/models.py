@@ -122,6 +122,12 @@ class BookInstance(models.Model):
 
 
 class BookTaking(models.Model):
+    is_returned = models.BooleanField(
+        default=False,
+        verbose_name='возвращена?'
+    )
+    is_returned.boolean = True
+    
     reader = models.ForeignKey(
         readersRecords.models.Reader, on_delete=models.CASCADE,
         verbose_name="читатель"
