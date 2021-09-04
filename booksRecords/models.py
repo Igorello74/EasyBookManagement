@@ -105,14 +105,7 @@ class BookInstance(models.Model):
         verbose_name="книга",
         help_text="ссылка на модель Книга :Model:`booksRecord.Book`"
     )
-    
-    taken_by = models.ForeignKey(
-        readersRecords.models.Reader,
-        on_delete=models.PROTECT,
-        verbose_name='взята',
-        help_text="Читатель, взявший книгу",
-        blank=True, null=True
-    )
+
 
     def __str__(self):
         return str(self.book)
@@ -121,14 +114,13 @@ class BookInstance(models.Model):
         ordering = ["barcode"]
         indexes = [
             models.Index(fields=['status']),
-            models.Index(fields=['taken_by']),
             models.Index(fields=['book']),
 
         ]
         verbose_name = "экземпляр книги"
         verbose_name_plural = "экземпляры книг"
-        
-        
+
+
 class BookTaking(models.Model):
     reader = models.ForeignKey(
         readersRecords.models.Reader, on_delete=models.CASCADE,
