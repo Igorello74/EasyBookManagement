@@ -128,3 +128,25 @@ class BookInstance(models.Model):
         verbose_name = "экземпляр книги"
         verbose_name_plural = "экземпляры книг"
         
+        
+class BookTaking(models.Model):
+    reader = models.ForeignKey(
+        readersRecords.models.Reader, on_delete=models.CASCADE,
+        verbose_name="читатель"
+    )
+    book_instance = models.ForeignKey(
+        "BookInstance", on_delete=models.CASCADE,
+        limit_choices_to={'status': BookInstance.IN_STORAGE},
+    )
+    when_taken = models.DateTimeField(
+        verbose_name="Дата и время взятия книги", auto_now_add=True
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.is_returned:
+            self.book_instance.status = BookInstance.ON_HANDS
+        else:
+            self.book_instance.status = BookInstance.IN_STORAGE
+        
+        self.book_instance.save()
+        super().save(*args, **kwargs)
