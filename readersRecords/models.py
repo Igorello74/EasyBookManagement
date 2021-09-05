@@ -59,6 +59,11 @@ class Reader(models.Model):
         blank=True,
     )
     
+    books = models.ManyToManyField(
+        'booksRecords.BookInstance',
+        through='booksRecords.BookTaking'
+    )
+
     def __str__(self):
         if self.role == self.STUDENT:
             return f"{self.name}, {self.group}"
