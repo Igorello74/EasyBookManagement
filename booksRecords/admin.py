@@ -43,3 +43,5 @@ class BookInstanceAdmin(admin.ModelAdmin):
     list_display = ('barcode', 'book', 'status')
     readonly_fields = ('status',)
     fields = ('status', 'barcode', 'book')
+    autocomplete_fields = ['book']
+    search_fields = ('barcode', 'book__name', 'book__authors')

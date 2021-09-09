@@ -63,6 +63,7 @@ class Reader(models.Model):
         'booksRecords.BookInstance',
         db_table='bookTaking',
         blank=True,
+        verbose_name='книги'
     )
 
     def __str__(self):
