@@ -61,7 +61,8 @@ class Reader(models.Model):
     
     books = models.ManyToManyField(
         'booksRecords.BookInstance',
-        through='booksRecords.BookTaking'
+        db_table='bookTaking',
+        blank=True,
     )
 
     def __str__(self):
