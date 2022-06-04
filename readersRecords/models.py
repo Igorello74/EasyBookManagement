@@ -67,7 +67,7 @@ class Reader(models.Model):
     )
 
     def __str__(self):
-        if self.role == self.STUDENT:
+        if self.group:
             return f"{self.name}, {self.group}"
         else:
             return self.name
