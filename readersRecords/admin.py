@@ -1,6 +1,9 @@
 from django.contrib import admin
+from django.db import models
+
 
 from .models import Reader
+from .widgets import ChoicesjsMultipleWidget
 
 @admin.register(Reader)
 class ReaderAdmin(admin.ModelAdmin):
@@ -10,4 +13,6 @@ class ReaderAdmin(admin.ModelAdmin):
 
     list_display = ("name", "role", "group", get_books)
     search_fields = ("name", 'group')
-    autocomplete_fields = ['books']
+    formfield_overrides = {
+        models.ManyToManyField: {'widget': ChoicesjsMultipleWidget}
+    }
