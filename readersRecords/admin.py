@@ -13,7 +13,6 @@ class ReaderAdmin(admin.ModelAdmin):
 
     list_display = ("name", "role", "group", get_books)
     search_fields = ("name", 'group')
-    autocomplete_fields = ("books",)
     formfield_overrides = {
         models.ManyToManyField: {'widget': ChoicesjsMultipleWidget}
     }
