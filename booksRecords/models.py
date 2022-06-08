@@ -17,13 +17,13 @@ class Book(models.Model):
     )
     name = models.CharField(verbose_name="название", max_length=65,)
     authors = models.TextField(
-        verbose_name="автор(-ы)", 
-        help_text="Авторы книги (сокращённо) через запятую", 
+        verbose_name="автор(-ы)",
+        help_text="Авторы книги (сокращённо) через запятую",
     )
     inventory_number = models.BigIntegerField(
         verbose_name="инвентарный номер"
     )
-    
+
     # Publication info
     year = models.SmallIntegerField(verbose_name="год издания")
     publisher = models.CharField(
@@ -79,7 +79,7 @@ class BookInstance(models.Model):
     ON_HANDS = 1
     EXPIRED = 2
     WRITTEN_OFF = 3
-    
+
     STATUSES = (
         (IN_STORAGE, "в хранилище"),
         (ON_HANDS, "на руках"),
@@ -92,13 +92,12 @@ class BookInstance(models.Model):
         default=IN_STORAGE,
         verbose_name="статус"
     )
-    
+
     notes = models.TextField(
         verbose_name="заметки",
         blank=True
     )
-    
-    
+
     book = models.ForeignKey(
         "Book",
         on_delete=models.CASCADE,
@@ -106,10 +105,9 @@ class BookInstance(models.Model):
         help_text="ссылка на модель Книга :Model:`booksRecord.Book`"
     )
 
-
     def __str__(self):
         return str(self.book)
-    
+
     class Meta:
         ordering = ["barcode"]
         indexes = [

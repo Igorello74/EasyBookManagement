@@ -9,11 +9,12 @@ LANGUAGES = (
     ('it', 'Итальянский'),
 )
 
+
 class Reader(models.Model):
     '''
     Модель описывает читателя.
     '''
-    
+
     TEACHER = "TE"
     STUDENT = "ST"
     OTHER = "OTH"
@@ -29,14 +30,14 @@ class Reader(models.Model):
 
     name = models.CharField(
         max_length=100,
-        verbose_name="полное имя"        
-    )    
+        verbose_name="полное имя"
+    )
     notes = models.TextField(
         max_length=500,
         blank=True,
         verbose_name="заметки"
     )
-    
+
     # Student specific info
     group = models.CharField(
         max_length=3,
@@ -44,21 +45,21 @@ class Reader(models.Model):
         help_text="номер и строчная литера класса без пробела",
         blank=True,
     )
-    
+
     first_lang = models.CharField(
         max_length=2,
         choices=LANGUAGES,
         verbose_name='Первый язык',
         blank=True,
     )
-    
+
     second_lang = models.CharField(
         max_length=2,
         choices=LANGUAGES,
         verbose_name='Второй язык',
         blank=True,
     )
-    
+
     books = models.ManyToManyField(
         'booksRecords.BookInstance',
         db_table='bookTaking',
@@ -80,6 +81,6 @@ class Reader(models.Model):
 
         )
         ordering = ['role', 'group', 'name']
-        
+
         verbose_name = "читатель"
         verbose_name_plural = 'читатели'

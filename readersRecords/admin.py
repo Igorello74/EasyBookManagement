@@ -5,6 +5,7 @@ from django.db import models
 from .models import Reader
 from .widgets import ChoicesjsMultipleWidget
 
+
 @admin.register(Reader)
 class ReaderAdmin(admin.ModelAdmin):
     def get_books(self):
