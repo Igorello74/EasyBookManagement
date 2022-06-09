@@ -16,7 +16,7 @@ function createMessage(messageList, messageClass, messageContent) {
     return li;
 }
 
-function updateMessageInfo(id, messageELement) {
+function updateMessageInfo(id, messageELement, choicesInstance) {
     $.getJSON(`/books/${id}`)
         .done((data) => {
             messageELement.children("a").attr({
@@ -27,17 +27,17 @@ function updateMessageInfo(id, messageELement) {
         })
         .fail(() => {
             messageELement.html(`Некорректный код #${id}`).addClass("warning").removeClass("success error");
-            ch.removeActiveItemsByValue(id);
+            choicesInstance.removeActiveItemsByValue(id);
         })
 }
 
-function createRemovalMessage(id, messageList) {
+function createRemovalMessage(id, messageList, choicesInstance) {
     obj = createMessage(messageList, 'error', `Книга <a href="#">#${id}</a> была удалена`);
-    updateMessageInfo(id, obj);
+    updateMessageInfo(id, obj, choicesInstance);
 }
-function createAdditionMessage(id, messageList) {
+function createAdditionMessage(id, messageList, choicesInstance) {
     obj = createMessage(messageList, 'success', `Книга <a href="#">#${id}</a> была добавлена`);
-    updateMessageInfo(id, obj);
+    updateMessageInfo(id, obj, choicesInstance);
 }
 
 
@@ -54,14 +54,14 @@ $(function () {
             choices.removeActiveItemsByValue(new_item);
         }
         else {
-            createAdditionMessage(new_item, messageList);
+            createAdditionMessage(new_item, messageList, choices);
         }
     })
 
     choicesElement.on('change', (event) => {
         item = event.detail.value;
         if (choices.getValue(true).indexOf(item) == -1) {
-            createRemovalMessage(item, messageList);
+            createRemovalMessage(item, messageList, choices);
         }
     })
 
