@@ -19,6 +19,20 @@ function sendMessage(messageList, messageClass, messageContent) {
     return li;
 }
 
+function getBookInstanceInfo(bookInstance, messageELement) {
+    $.getJSON(`/books/${bookInstance}`)
+        .done((data) => {
+            messageELement.children("a").attr({
+                'href': data.admin_url,
+                "target": "_blank",
+                "rel": "noopener noreferrer",
+            })
+        })
+        .fail(() => {
+            messageELement.html(`Некорректный код ${bookInstance}`).addClass("warning").removeClass("success error")
+        })
+}
+
 function sendRemovalMessage(messageList, bookInstance) {
     sendMessage(messageList, 'error', `Книга #${bookInstance} была удалена`);
 }
