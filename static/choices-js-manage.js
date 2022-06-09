@@ -10,17 +10,14 @@ function isTwiceOrMore(array, item) {
     return false;
 }
 
-function sendMessage(messageList, messageClass, messageContent) {
-    let li = $(`<li></li>`)
-        .html(messageContent)
-        .addClass(messageClass)
-        .appendTo(messageList);
+function createMessage(messageList, messageClass, messageContent) {
+    let li = $(`<li></li>`).html(messageContent).addClass(messageClass).appendTo(messageList);
     li[0].scrollIntoView();
     return li;
 }
 
-function getBookInstanceInfo(bookInstance, messageELement) {
-    $.getJSON(`/books/${bookInstance}`)
+function updateMessageInfo(id, messageELement) {
+    $.getJSON(`/books/${id}`)
         .done((data) => {
             messageELement.children("a").attr({
                 'href': data.admin_url,
@@ -29,17 +26,18 @@ function getBookInstanceInfo(bookInstance, messageELement) {
             })
         })
         .fail(() => {
-            messageELement.html(`Некорректный код ${bookInstance}`).addClass("warning").removeClass("success error")
+            messageELement.html(`Некорректный код #${id}`).addClass("warning").removeClass("success error");
+            ch.removeActiveItemsByValue(id);
         })
 }
 
-function sendRemovalMessage(messageList, bookInstance) {
-    obj = sendMessage(messageList, 'error', `Книга <a href="#">#${bookInstance}</a> была удалена`);
-    getBookInstanceInfo(bookInstance, obj);
+function createRemovalMessage(id, messageList) {
+    obj = createMessage(messageList, 'error', `Книга <a href="#">#${id}</a> была удалена`);
+    updateMessageInfo(id, obj);
 }
-function sendAdditionMessage(messageList, bookInstance) {
-    obj = sendMessage(messageList, 'success', `Книга <a href="#">#${bookInstance}</a> была добавлена`);
-    getBookInstanceInfo(bookInstance, obj);
+function createAdditionMessage(id, messageList) {
+    obj = createMessage(messageList, 'success', `Книга <a href="#">#${id}</a> была добавлена`);
+    updateMessageInfo(id, obj);
 }
 
 
@@ -47,23 +45,23 @@ $(function () {
     let messageList = $("<ul></ul>").addClass("messagelist");
     $("nav#nav-sidebar").append(messageList);
 
-    let element = $('[choicesjs]');
-    const ch = new Choices(element[0], { position: 'bottom', removeItemButton: true });
+    let choicesElement = $('[choicesjs]');
+    const choices = new Choices(choicesElement[0], { position: 'bottom', removeItemButton: true });
 
-    element.on('addItem', (event) => {
+    choicesElement.on('addItem', (event) => {
         new_item = event.detail.value;
-        if (isTwiceOrMore(ch.getValue(true), new_item)) {
-            ch.removeActiveItemsByValue(new_item);
+        if (isTwiceOrMore(choices.getValue(true), new_item)) {
+            choices.removeActiveItemsByValue(new_item);
         }
         else {
-            sendAdditionMessage(messageList, new_item);
+            createAdditionMessage(new_item, messageList);
         }
     })
 
-    element.on('change', (event) => {
+    choicesElement.on('change', (event) => {
         item = event.detail.value;
-        if (ch.getValue(true).indexOf(item) == -1) {
-            sendRemovalMessage(messageList, item);
+        if (choices.getValue(true).indexOf(item) == -1) {
+            createRemovalMessage(item, messageList);
         }
     })
 
