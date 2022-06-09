@@ -16,6 +16,16 @@ function createMessage(messageList, messageClass, messageContent) {
     return li;
 }
 
+function editItemLabel(editedItem, newLabel, choicesInstance) {
+    let items = choicesInstance._currentState.items;
+
+    items = $.grep(items, (x) => { return x.value == editedItem && x.active });
+    if (items.length) {
+        items[0].label = newLabel;
+        choicesInstance._renderItems();
+    }
+}
+
 function updateMessageInfo(id, messageELement, choicesInstance) {
     $.getJSON(`/books/${id}`)
         .done((data) => {
@@ -23,7 +33,8 @@ function updateMessageInfo(id, messageELement, choicesInstance) {
                 'href': data.admin_url,
                 "target": "_blank",
                 "rel": "noopener noreferrer",
-            })
+            });
+            editItemLabel(id, data.name, choicesInstance);
         })
         .fail(() => {
             messageELement.html(`Некорректный код <span style="color:var(--error-fg);">#${id}</span>`).addClass("warning").removeClass("success error");
@@ -46,7 +57,7 @@ $(function () {
     $("nav#nav-sidebar").append(messageList);
 
     let choicesElement = $('[choicesjs]');
-    const choices = new Choices(choicesElement[0], { position: 'bottom', removeItemButton: true });
+    choices = new Choices(choicesElement[0], { position: 'bottom', removeItemButton: true });
 
     choicesElement.on('addItem', (event) => {
         new_item = event.detail.value;
