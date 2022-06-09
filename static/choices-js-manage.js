@@ -1,3 +1,5 @@
+$ = django.jQuery;
+
 function isTwiceOrMore(array, item) {
     ind1 = array.indexOf(item);
     if (ind1 != -1) {
@@ -9,11 +11,12 @@ function isTwiceOrMore(array, item) {
 }
 
 function sendMessage(messageList, messageClass, messageContent) {
-    let li = document.createElement('li');
-    li.className = messageClass;
-    li.innerHTML = messageContent;
-    messageList.append(li);
-    li.scrollIntoView();
+    let li = $(`<li></li>`)
+        .html(messageContent)
+        .addClass(messageClass)
+        .appendTo(messageList);
+    li[0].scrollIntoView();
+    return li;
 }
 
 function sendRemovalMessage(messageList, bookInstance) {
