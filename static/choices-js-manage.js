@@ -43,37 +43,28 @@ function sendAdditionMessage(messageList, bookInstance) {
 }
 
 
-document.addEventListener('DOMContentLoaded', function () {
-    messageList = document.createElement("ul");
-    messageList.className = "messagelist";
-    let outer = document.querySelector("nav#nav-sidebar");
-    outer.append(messageList);
+$(function () {
+    let messageList = $("<ul></ul>").addClass("messagelist");
+    $("nav#nav-sidebar").append(messageList);
 
+    let element = $('[choicesjs]');
+    const ch = new Choices(element[0], { position: 'bottom', removeItemButton: true });
 
-    var element = document.querySelector('[choicesjs]');
-    const ch = new Choices(element, { position: 'bottom', removeItemButton: true });
-
-    element.addEventListener(
-        'addItem',
-        (event) => {
-            new_item = event.detail.value;
-            if (isTwiceOrMore(ch.getValue(true), new_item)) {
-                ch.removeActiveItemsByValue(new_item);
-            }
-            else {
-                sendAdditionMessage(messageList, new_item);
-            }
+    element.on('addItem', (event) => {
+        new_item = event.detail.value;
+        if (isTwiceOrMore(ch.getValue(true), new_item)) {
+            ch.removeActiveItemsByValue(new_item);
         }
-    )
-
-    element.addEventListener(
-        'change',
-        (event) => {
-            item = event.detail.value;
-            if (ch.getValue(true).indexOf(item) == -1) {
-                sendRemovalMessage(messageList, item);
-            }
+        else {
+            sendAdditionMessage(messageList, new_item);
         }
-    )
+    })
+
+    element.on('change', (event) => {
+        item = event.detail.value;
+        if (ch.getValue(true).indexOf(item) == -1) {
+            sendRemovalMessage(messageList, item);
+        }
+    })
 
 })
