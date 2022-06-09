@@ -26,7 +26,7 @@ function editItemLabel(editedItem, newLabel, choicesInstance) {
     }
 }
 
-function updateMessageInfo(id, messageELement, choicesInstance) {
+function updateMessageInfo(id, messageELement, choicesInstance, editItem = false) {
     $.getJSON(`/books/${id}`)
         .done((data) => {
             messageELement.children("a").attr({
@@ -34,7 +34,7 @@ function updateMessageInfo(id, messageELement, choicesInstance) {
                 "target": "_blank",
                 "rel": "noopener noreferrer",
             });
-            editItemLabel(id, data.name, choicesInstance);
+            if (editItem) editItemLabel(id, `${data.authors}: ${data.name}`, choicesInstance);
         })
         .fail(() => {
             messageELement.html(`Некорректный код <span style="color:var(--error-fg);">#${id}</span>`).addClass("warning").removeClass("success error");
@@ -42,14 +42,16 @@ function updateMessageInfo(id, messageELement, choicesInstance) {
         })
 }
 
+function createAdditionMessage(id, messageList, choicesInstance) {
+    obj = createMessage(messageList, 'success', `Книга <a href="#">#${id}</a> была добавлена`);
+    updateMessageInfo(id, obj, choicesInstance, true);
+}
+
 function createRemovalMessage(id, messageList, choicesInstance) {
     obj = createMessage(messageList, 'error', `Книга <a href="#">#${id}</a> была удалена`);
     updateMessageInfo(id, obj, choicesInstance);
 }
-function createAdditionMessage(id, messageList, choicesInstance) {
-    obj = createMessage(messageList, 'success', `Книга <a href="#">#${id}</a> была добавлена`);
-    updateMessageInfo(id, obj, choicesInstance);
-}
+
 
 
 $(function () {
