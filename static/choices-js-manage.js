@@ -26,7 +26,7 @@ function updateMessageInfo(id, messageELement, choicesInstance) {
             })
         })
         .fail(() => {
-            messageELement.html(`Некорректный код #${id}`).addClass("warning").removeClass("success error");
+            messageELement.html(`Некорректный код <span style="color:var(--error-fg);">#${id}</span>`).addClass("warning").removeClass("success error");
             choicesInstance.removeActiveItemsByValue(id);
         })
 }
