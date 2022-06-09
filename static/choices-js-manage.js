@@ -34,10 +34,12 @@ function getBookInstanceInfo(bookInstance, messageELement) {
 }
 
 function sendRemovalMessage(messageList, bookInstance) {
-    sendMessage(messageList, 'error', `Книга #${bookInstance} была удалена`);
+    obj = sendMessage(messageList, 'error', `Книга <a href="#">#${bookInstance}</a> была удалена`);
+    getBookInstanceInfo(bookInstance, obj);
 }
 function sendAdditionMessage(messageList, bookInstance) {
-    sendMessage(messageList, 'success', `Книга #${bookInstance} была добавлена`);
+    obj = sendMessage(messageList, 'success', `Книга <a href="#">#${bookInstance}</a> была добавлена`);
+    getBookInstanceInfo(bookInstance, obj);
 }
 
 
