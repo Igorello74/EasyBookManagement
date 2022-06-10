@@ -34,21 +34,37 @@ function updateMessageInfo(id, messageELement, choicesInstance, editItem = false
                 "target": "_blank",
                 "rel": "noopener noreferrer",
             });
-            if (editItem) editItemLabel(id, `${data.authors}: ${data.name}`, choicesInstance);
+            if (editItem) {
+                editItemLabel(
+                    id,
+                    `<span class="choices__item-id">#${id}</span> · ${data.authors}: ${data.name}`,
+                    choicesInstance
+                );
+            }
         })
         .fail(() => {
-            messageELement.html(`Некорректный код <span style="color:var(--error-fg);">#${id}</span>`).addClass("warning").removeClass("success error");
+            messageELement
+              .html(`Некорректный код <span class="messagelist__book-id messagelist__book-id--wrong">#${id}</span>`)
+              .addClass("warning").removeClass("success error");
             choicesInstance.removeActiveItemsByValue(id);
         })
 }
 
 function createAdditionMessage(id, messageList, choicesInstance) {
-    obj = createMessage(messageList, 'success', `Книга <a href="#">#${id}</a> была добавлена`);
+    obj = createMessage(
+        messageList,
+        'success',
+        `Книга <a class="messagelist__book-id" href="#">#${id}</a> была добавлена`
+    );
     updateMessageInfo(id, obj, choicesInstance, true);
 }
 
 function createRemovalMessage(id, messageList, choicesInstance) {
-    obj = createMessage(messageList, 'error', `Книга <a href="#">#${id}</a> была удалена`);
+    obj = createMessage(
+        messageList,
+        'error',
+        `Книга <a class="messagelist__book-id" href="#">#${id}</a> была удалена`
+        );
     updateMessageInfo(id, obj, choicesInstance);
 }
 
