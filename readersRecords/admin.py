@@ -17,3 +17,6 @@ class ReaderAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.ManyToManyField: {'widget': ChoicesjsTextWidget}
     }
+
+    class Media:
+        js = ('reader.js',)
