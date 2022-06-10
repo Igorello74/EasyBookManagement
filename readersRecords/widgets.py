@@ -13,9 +13,7 @@ class ChoicesjsMultipleWidget(forms.widgets.Input):
             )
         }
 
-    def __init__(self, attrs=None): #todo: delete choices arg
-        attrs = attrs or {}
-
+    def __init__(self, attrs={}):
         attrs['class'] = "choicesjs"
 
         super().__init__(attrs)
