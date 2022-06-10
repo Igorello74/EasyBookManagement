@@ -74,7 +74,7 @@ $(function () {
     let messageList = $("<ul></ul>").addClass("messagelist");
     $("nav#nav-sidebar").append(messageList);
 
-    let choicesElement = $('[choicesjs]');
+    let choicesElement = $('.choicesjs');
     choices = new Choices(choicesElement[0], { position: 'bottom', removeItemButton: true });
 
     choicesElement.on('addItem', (event) => {
