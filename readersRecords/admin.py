@@ -3,7 +3,7 @@ from django.db import models
 
 
 from .models import Reader
-from .widgets import ChoicesjsMultipleWidget
+from .widgets import ChoicesjsTextWidget
 
 
 @admin.register(Reader)
@@ -15,5 +15,5 @@ class ReaderAdmin(admin.ModelAdmin):
     list_display = ("name", "role", "group", get_books)
     search_fields = ("name", 'group')
     formfield_overrides = {
-        models.ManyToManyField: {'widget': ChoicesjsMultipleWidget}
+        models.ManyToManyField: {'widget': ChoicesjsTextWidget}
     }

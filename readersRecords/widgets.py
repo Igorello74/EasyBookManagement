@@ -1,7 +1,7 @@
 from django import forms
 
 
-class ChoicesjsMultipleWidget(forms.widgets.Input):
+class ChoicesjsTextWidget(forms.widgets.Input):
     class Media:
         js = (
             'https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js',
