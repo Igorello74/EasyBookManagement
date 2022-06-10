@@ -1,4 +1,4 @@
-$ = django.jQuery;
+let $ = django.jQuery;
 
 function isTwiceOrMore(array, item) {
     let ind1 = array.indexOf(item);
@@ -74,8 +74,14 @@ $(function () {
     let messageList = $("<ul></ul>").addClass("messagelist");
     $("nav#nav-sidebar").append(messageList);
 
-    let choicesElement = $('.choicesjs');
-    let choices = new Choices(choicesElement[0], { position: 'bottom', removeItemButton: true });
+    let choicesElements = $('.choicesjs');
+    let choicesElement = choicesElements;
+
+    choicesElements.each(function () {
+        this.choices = new Choices((this), { position: 'bottom', removeItemButton: true });
+    });
+
+    let choices = choicesElement[0].choices;
 
     choicesElement.on('addItem', (event) => {
         let new_item = event.detail.value;
