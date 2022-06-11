@@ -1,4 +1,4 @@
-var $ = django.jQuery;
+if (typeof ($) == "undefined") var $ = django.jQuery;
 
 function defer(conditon, when_succeed, timeout = 50) {
     if (conditon()) {

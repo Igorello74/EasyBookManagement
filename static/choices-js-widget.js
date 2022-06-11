@@ -1,4 +1,4 @@
-var $ = django.jQuery;
+if (typeof ($) == "undefined") var $ = django.jQuery;
 
 $(function () {
     let choicesElements = $('.choicesjs');
