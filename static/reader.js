@@ -3,11 +3,9 @@ var $ = django.jQuery;
 function defer(conditon, when_succeed, timeout = 50) {
     if (conditon()) {
         when_succeed();
-        console.info("Defer condition succeeded!");
     }
     else {
         setTimeout(() => defer(conditon, when_succeed, timeout), timeout);
-        console.warn("Defer condition failed...");
     }
 }
 
