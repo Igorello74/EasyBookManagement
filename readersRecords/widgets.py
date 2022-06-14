@@ -20,7 +20,10 @@ class ChoicesjsTextWidget(forms.widgets.Input):
 
     def format_value(self, value):
         """Return selected values as a list."""
-        return ','.join(value)
+        if value:
+            return ','.join(value)
+        else:
+            return ""
 
     def value_from_datadict(self, data, files, name):
         items = data[name].split(',')
