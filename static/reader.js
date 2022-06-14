@@ -51,17 +51,34 @@ function getBookInstanceRepresentation(data) {
     return `<span class="choices__item-id">#${data.id}</span> · ${data.authors}: ${data.name}`
 }
 
-function updateMessageInfo(id, messageELement, choicesInstance, editItem = false) {
+function updateMessageInfo(id, messageELement, choicesInstance, addition = false) {
     getBookInstanceInfo(
         id,
         (data) => {
+            if (data.status != "in storage" && addition) {
+                messageELement
+                    .html(`Некорректный статус книги <a>#${id}</a>`)
+                    .attr({
+                        "class": "warning",
+                        title: `Возможно книга уже взята, списана или истёк срок возврата.`
+                    });
+                    
+                messageELement.children("a").attr({
+                    "class": "messagelist__book-id messagelist__book-id--wrong",
+                    href: data.admin_url,
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    title: "Узнать  подробности"
+                })
+            }
+
             messageELement.children("a").attr({
                 href: data.admin_url,
                 target: "_blank",
                 rel: "noopener noreferrer",
                 title: `${data.authors}: ${data.name}`
             });
-            if (editItem) {
+            if (addition) {
                 editItemLabel(
                     id,
                     getBookInstanceRepresentation(data),
