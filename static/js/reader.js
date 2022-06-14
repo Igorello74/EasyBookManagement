@@ -107,7 +107,7 @@ function createAdditionMessage(id, messageList, choicesInstance) {
         messageList,
         'log-list__item log-list__item--add',
         `Книга <a class="log-list__book-id" href="#">#${id}</a> была добавлена`
-    );
+    ).attr("id", `message-${id}`);
     updateMessageInfo(id, messageObj, choicesInstance, true);
 }
 
@@ -116,7 +116,7 @@ function createRemovalMessage(id, messageList, choicesInstance) {
         messageList,
         'log-list__item log-list__item--delete',
         `Книга <a class="log-list__book-id" href="#">#${id}</a> была удалена`
-    );
+    ).attr("id", `message-${id}`);
     updateMessageInfo(id, messageObj, choicesInstance);
 }
 
