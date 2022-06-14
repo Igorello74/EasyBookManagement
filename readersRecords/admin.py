@@ -18,5 +18,7 @@ class ReaderAdmin(admin.ModelAdmin):
         models.ManyToManyField: {'widget': ChoicesjsTextWidget}
     }
 
+    list_filter = ("group",)
+
     class Media:
         js = ('reader.js',)
