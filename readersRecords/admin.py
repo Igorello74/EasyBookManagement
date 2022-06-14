@@ -21,4 +21,4 @@ class ReaderAdmin(admin.ModelAdmin):
     list_filter = ("group",)
 
     class Media:
-        js = ('reader.js',)
+        js = ('js/reader.js',)

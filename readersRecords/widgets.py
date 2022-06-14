@@ -5,7 +5,7 @@ class ChoicesjsTextWidget(forms.widgets.Input):
     class Media:
         js = (
             'https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js',
-            'choices-js-widget.js'
+            'js/choices-js-widget.js'
         )
         css = {
             'all': (
