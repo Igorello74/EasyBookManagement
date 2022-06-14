@@ -1,12 +1,17 @@
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
 from .models import BookInstance
 
 
 def get_bookInstance_info(request, id):
-    obj = get_object_or_404(BookInstance, pk=id)
+    try:
+        obj = BookInstance.objects.get(pk=id)
+    except BookInstance.DoesNotExist:
+        return JsonResponse({
+            'admin_url': f'{reverse("admin:booksRecords_bookinstance_add")}?barcode={id}',
+        }, json_dumps_params={'ensure_ascii': False}, status=404)
+
 
     return JsonResponse({
         'id': id,

@@ -56,9 +56,10 @@ function updateMessageInfo(id, messageELement, choicesInstance, editItem = false
         id,
         (data) => {
             messageELement.children("a").attr({
-                'href': data.admin_url,
-                "target": "_blank",
-                "rel": "noopener noreferrer",
+                href: data.admin_url,
+                target: "_blank",
+                rel: "noopener noreferrer",
+                title: `${data.authors}: ${data.name}`
             });
             if (editItem) {
                 editItemLabel(
@@ -68,10 +69,17 @@ function updateMessageInfo(id, messageELement, choicesInstance, editItem = false
                 );
             }
         },
-        () => {
+        (jqxhr) => {
             messageELement
-                .html(`Некорректный код <span class="messagelist__book-id messagelist__book-id--wrong">#${id}</span>`)
+                .html(`Некорректный код <a>#${id}</a>`)
                 .addClass("warning").removeClass("success error");
+            messageELement.children("a").attr({
+                "class": "messagelist__book-id messagelist__book-id--wrong",
+                href: jqxhr.responseJSON.admin_url,
+                target: "_blank",
+                rel: "noopener noreferrer",
+                title: `Создать новый экземпляр с #${id}`
+            })
             choicesInstance.removeActiveItemsByValue(id);
         }
     );
