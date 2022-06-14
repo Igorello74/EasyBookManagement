@@ -1,5 +1,7 @@
 from django.db import models
 
+import booksRecords.models
+
 
 LANGUAGES = (
     ('en', 'Английский'),
@@ -64,7 +66,8 @@ class Reader(models.Model):
         'booksRecords.BookInstance',
         db_table='bookTaking',
         blank=True,
-        verbose_name='книги'
+        verbose_name='книги',
+        limit_choices_to={'status': booksRecords.models.BookInstance.IN_STORAGE}
     )
 
     def __str__(self):

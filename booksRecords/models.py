@@ -1,8 +1,5 @@
 from django.db import models
 
-import readersRecords.models
-
-
 class Book(models.Model):
     """
     Формуляр книги. К нему могут относится множество экземпляров.
