@@ -40,8 +40,13 @@ class BookAdmin(admin.ModelAdmin):
 
 @admin.register(models.BookInstance)
 class BookInstanceAdmin(admin.ModelAdmin):
+    @admin.display(description="Текущий читатель")
+    def taken_by(self, instance):
+        return ', '.join(str(i) for i in instance.reader_set.all())
+    
+
     list_display = ('barcode', 'book', 'status')
-    readonly_fields = ('status',)
-    fields = ('status', 'barcode', 'book', "notes")
+    readonly_fields = ('status', 'taken_by')
+    fields = ('status', 'barcode', 'book', "notes", 'taken_by')
     autocomplete_fields = ['book']
     search_fields = ('barcode', 'book__name', 'book__authors')
