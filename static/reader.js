@@ -80,7 +80,7 @@ function createRemovalMessage(id, messageList, choicesInstance) {
 
 $(() => {
     var choicesElement = $("#id_books.choicesjs");
-    
+
     // I need to use defer function, because this very script happens to be
     // defined before choices-js-widget.js, therefore it can't access
     // choices-js-widget's thinhs until the remote script is executed.
@@ -89,21 +89,19 @@ $(() => {
         let messageList = $("<ul></ul>").addClass("messagelist");
         $("nav#nav-sidebar").append(messageList);
 
-
-        choicesElement.on('addItem', (event) => {
-            let new_item = event.detail.value;
-            if (isTwiceOrMore(choices.getValue(true), new_item)) {
-                choices.removeActiveItemsByValue(new_item);
-            }
-            else {
-                createAdditionMessage(new_item, messageList, choices);
-            }
-        })
-
         choicesElement.on('change', (event) => {
             let item = event.detail.value;
             if (choices.getValue(true).indexOf(item) == -1) {
                 createRemovalMessage(item, messageList, choices);
+            }
+            else {
+                if (isTwiceOrMore(choices.getValue(true), item)) {
+                    choices.removeActiveItemsByValue(item);
+                    createRemovalMessage(item, messageList, choices);
+                }
+                else {
+                    createAdditionMessage(item, messageList, choices);
+                }
             }
         })
     });
