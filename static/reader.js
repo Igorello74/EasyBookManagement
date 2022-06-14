@@ -42,7 +42,7 @@ function editAllLabels(editCallback, choicesInstance) {
 }
 
 function getBookInstanceInfo(id, done, fail) {
-    $.getJSON(`/books/${id}`)
+    $.getJSON(`/books/bookInstance/${id}`)
         .done(done)
         .fail(fail);
 }
@@ -108,7 +108,6 @@ $(() => {
         editAllLabels(function () {
             getBookInstanceInfo(this.value, data => {
                 this.label = getBookInstanceRepresentation(data);
-                console.log(1);
             })
         }, choices);
 
