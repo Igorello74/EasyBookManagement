@@ -59,12 +59,12 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
                 messageELement
                     .html(`Некорректный статус книги <a>#${id}</a>`)
                     .attr({
-                        "class": "warning",
+                        "class": "log-list__item log-list__item--warning",
                         title: `Возможно книга уже взята, списана или истёк срок возврата.`
                     });
                     
                 messageELement.children("a").attr({
-                    "class": "messagelist__book-id messagelist__book-id--wrong",
+                    "class": "log-list__book-id log-list__book-id--wrong",
                     href: data.admin_url,
                     target: "_blank",
                     rel: "noopener noreferrer",
@@ -88,10 +88,10 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
         },
         (jqxhr) => {
             messageELement
-                .html(`Некорректный код <a>#${id}</a>`)
-                .addClass("warning").removeClass("success error");
+                .html(`Код <a>#${id}</a> не существует`)
+                .addClass("log-list__item--warning").removeClass("log-list__item--add log-list__item--delete");
             messageELement.children("a").attr({
-                "class": "messagelist__book-id messagelist__book-id--wrong",
+                "class": "log-list__book-id log-list__book-id--wrong",
                 href: jqxhr.responseJSON.admin_url,
                 target: "_blank",
                 rel: "noopener noreferrer",
@@ -105,8 +105,8 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
 function createAdditionMessage(id, messageList, choicesInstance) {
     let messageObj = createMessage(
         messageList,
-        'success',
-        `Книга <a class="messagelist__book-id" href="#">#${id}</a> была добавлена`
+        'log-list__item log-list__item--add',
+        `Книга <a class="log-list__book-id" href="#">#${id}</a> была добавлена`
     );
     updateMessageInfo(id, messageObj, choicesInstance, true);
 }
@@ -114,8 +114,8 @@ function createAdditionMessage(id, messageList, choicesInstance) {
 function createRemovalMessage(id, messageList, choicesInstance) {
     let messageObj = createMessage(
         messageList,
-        'error',
-        `Книга <a class="messagelist__book-id" href="#">#${id}</a> была удалена`
+        'log-list__item log-list__item--delete',
+        `Книга <a class="log-list__book-id" href="#">#${id}</a> была удалена`
     );
     updateMessageInfo(id, messageObj, choicesInstance);
 }
@@ -139,7 +139,7 @@ $(() => {
         setTimeout(() => $("#id_books.choicesjs")[0].choices._renderItems(), 200);
         setTimeout(() => $("#id_books.choicesjs")[0].choices._renderItems(), 5000);
 
-        let messageList = $("<ul></ul>").addClass("messagelist");
+        let messageList = $("<ul></ul>").addClass("log-list");
         $("nav#nav-sidebar").append(messageList);
 
         choicesElement.on('change', (event) => {

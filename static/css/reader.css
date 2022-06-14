@@ -1,0 +1,29 @@
+.log-list {
+    padding: 0;
+    margin: 0;
+}
+
+.log-list__item {
+    display: block;
+    font-weight: 400;
+    font-size: 13px;
+    padding: 10px 10px 10px 65px;
+    margin: 0 0 2px 0;
+    background-size: 16px auto;
+    color: var(--body-fg);
+}
+
+.log-list__item--add {
+    background: var(--message-success-bg) url(../img/plus.svg) 40px 12px no-repeat;
+    background-size: 16px auto;
+}
+
+.log-list__item--warning {
+    background: var(--message-warning-bg) url(../img/warning.svg) 40px 12px no-repeat;
+    background-size: 16px auto;
+}
+
+.log-list__item--delete {
+    background: var(--message-error-bg) url(../img/minus.svg) 40px 12px no-repeat;
+    background-size: 16px auto;
+}

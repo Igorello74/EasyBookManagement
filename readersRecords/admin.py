@@ -22,3 +22,4 @@ class ReaderAdmin(admin.ModelAdmin):
 
     class Media:
         js = ('js/reader.js',)
+        css = {'all': ('css/reader.css',)}
