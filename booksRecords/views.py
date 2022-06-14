@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.urls import reverse
 
-from .models import BookInstance
+from .models import Book, BookInstance
 
 
 def get_bookInstance_info(request, id):
@@ -12,12 +12,21 @@ def get_bookInstance_info(request, id):
             'admin_url': f'{reverse("admin:booksRecords_bookinstance_add")}?barcode={id}',
         }, json_dumps_params={'ensure_ascii': False}, status=404)
 
+    status = obj.status
+    if status == BookInstance.IN_STORAGE:
+        status = "in storage"
+    elif status == BookInstance.ON_HANDS:
+        status = "on hands"
+    elif status == BookInstance.EXPIRED:
+        status = "expired"
+    elif status == BookInstance.WRITTEN_OFF:
+        status = "written off"
+
 
     return JsonResponse({
-        'id': id,
+        'id': obj.barcode,
         'name': obj.book.name,
         'authors': obj.book.authors,
-        'subject': obj.book.subject or None,
-        'grade': obj.book.grade or None,
+        'status': status,
         'admin_url': reverse("admin:booksRecords_bookinstance_change", args=(id,))
     }, json_dumps_params={'ensure_ascii': False})
