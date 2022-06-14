@@ -118,6 +118,7 @@ function createRemovalMessage(id, messageList, choicesInstance) {
         `Книга <a class="log-list__book-id" href="#">#${id}</a> была удалена`
     ).attr("id", `message-${id}`);
     updateMessageInfo(id, messageObj, choicesInstance);
+    $(`.log-list__item--add#message-${id}`).last().addClass("log-list__item--stricken");
 }
 
 

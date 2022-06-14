@@ -27,3 +27,7 @@
     background: var(--message-error-bg) url(../img/minus.svg) 40px 12px no-repeat;
     background-size: 16px auto;
 }
+
+.log-list__item--stricken {
+    text-decoration: line-through;
+}
