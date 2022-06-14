@@ -35,6 +35,12 @@ function editItemLabel(editedItem, newLabel, choicesInstance) {
     }
 }
 
+function editAllLabels(editCallback, choicesInstance) {
+    let items = choicesInstance._currentState.items;
+    items = $.grep(items, x => x.active);
+    $.each(items, editCallback);
+}
+
 function getBookInstanceInfo(id, done, fail) {
     $.getJSON(`/books/${id}`)
         .done(done)
@@ -98,6 +104,17 @@ $(() => {
     // choices-js-widget's thinhs until the remote script is executed.
     defer(() => typeof (choicesElement[0].choices) != "undefined", () => {
         var choices = choicesElement[0].choices;
+
+        editAllLabels(function () {
+            getBookInstanceInfo(this.value, data => {
+                this.label = getBookInstanceRepresentation(data);
+                console.log(1);
+            })
+        }, choices);
+
+        setTimeout(() => $("#id_books.choicesjs")[0].choices._renderItems(), 200);
+        setTimeout(() => $("#id_books.choicesjs")[0].choices._renderItems(), 5000);
+
         let messageList = $("<ul></ul>").addClass("messagelist");
         $("nav#nav-sidebar").append(messageList);
 
@@ -115,7 +132,6 @@ $(() => {
                     createAdditionMessage(item, messageList, choices);
                 }
             }
-        })
+        });
     });
-
 })
