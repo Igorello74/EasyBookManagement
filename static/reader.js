@@ -35,9 +35,20 @@ function editItemLabel(editedItem, newLabel, choicesInstance) {
     }
 }
 
-function updateMessageInfo(id, messageELement, choicesInstance, editItem = false) {
+function getBookInstanceInfo(id, done, fail) {
     $.getJSON(`/books/${id}`)
-        .done((data) => {
+        .done(done)
+        .fail(fail);
+}
+
+function getBookInstanceRepresentation(data) {
+    return `<span class="choices__item-id">#${data.id}</span> · ${data.authors}: ${data.name}`
+}
+
+function updateMessageInfo(id, messageELement, choicesInstance, editItem = false) {
+    getBookInstanceInfo(
+        id,
+        (data) => {
             messageELement.children("a").attr({
                 'href': data.admin_url,
                 "target": "_blank",
@@ -46,17 +57,18 @@ function updateMessageInfo(id, messageELement, choicesInstance, editItem = false
             if (editItem) {
                 editItemLabel(
                     id,
-                    `<span class="choices__item-id">#${id}</span> · ${data.authors}: ${data.name}`,
+                    getBookInstanceRepresentation(data),
                     choicesInstance
                 );
             }
-        })
-        .fail(() => {
+        },
+        () => {
             messageELement
                 .html(`Некорректный код <span class="messagelist__book-id messagelist__book-id--wrong">#${id}</span>`)
                 .addClass("warning").removeClass("success error");
             choicesInstance.removeActiveItemsByValue(id);
-        })
+        }
+    );
 }
 
 function createAdditionMessage(id, messageList, choicesInstance) {
