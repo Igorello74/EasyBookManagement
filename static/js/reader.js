@@ -99,7 +99,7 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
             })
             choicesInstance.removeActiveItemsByValue(id);
 
-            // Decrease 'added' counter
+            // Decrease counters
             calculateCounters(null, null, null, special_decrease=true);
         }
     );
@@ -175,7 +175,7 @@ $(() => {
         let iterated = new Map([
             ['added', 'выдано:'],
             ['deleted', 'принято:'],
-            ['overall', 'итого на руках:']
+            ['overall', 'всего на руках:']
         ])
 
         for (const i of iterated) {
@@ -186,6 +186,8 @@ $(() => {
             id='counter_${i[0]}'>0</div>`)
                 .appendTo(bookCounter);
         }
+
+        bookCounter.children().last().addClass("book-counter__inner--overall");
 
         counter_overall.innerText = initialSet.size;
 

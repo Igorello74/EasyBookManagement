@@ -43,8 +43,13 @@
 }
 
 .book-counter__inner {
-    margin: 0 5px;
+    padding: 0 5px;
     float: left;
+}
+
+.book-counter__inner--overall {
+    border: dotted 4px var(--hairline-color);
+    margin-top: -4px;
 }
 
 label.book-counter__label {
