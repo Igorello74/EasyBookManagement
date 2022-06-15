@@ -131,6 +131,10 @@ $(() => {
     defer(() => typeof (choicesElement[0].choices) != "undefined", () => {
         var choices = choicesElement[0].choices;
 
+        // Prevent form submitting on hitting Enter on empty Choices' input
+        // (it might happen when one rapidly scans codes)
+        $(".choices__input").on("keydown", event => event.key != "Enter");
+
         editAllLabels(function () {
             getBookInstanceInfo(this.value, data => {
                 this.label = getBookInstanceRepresentation(data);
