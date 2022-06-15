@@ -62,7 +62,7 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
                         "class": "log-list__item log-list__item--warning",
                         title: `Возможно книга уже взята, списана или истёк срок возврата.`
                     });
-                    
+
                 messageELement.children("a").attr({
                     "class": "log-list__book-id log-list__book-id--wrong",
                     href: data.admin_url,
@@ -135,18 +135,46 @@ $(() => {
         // (it might happen when one rapidly scans codes)
         $(".choices__input").on("keydown", event => event.key != "Enter");
 
+        let initialSet = new Set($(".choicesjs")[0].value.split(','));
+
+        // Add book counter after all formfields
+        let bookCounter = $("<div>")
+            .insertAfter(".form-row:last-child")
+            .addClass("form-row book-counter");
+        
+        let iterated = new Map([
+            ['added', 'выдано:'],
+            ['deleted', 'принято:'],
+            ['overall', 'итого на руках:']
+        ])
+
+        for (const i of iterated) {
+            $("<div>")
+            .addClass("book-counter__inner")
+            .append(`<label class='book-counter__label'>${i[1]}</label>`)
+            .append(`<div class='book-counter__number book-counter__number--${i[0]}'
+            id='counter_${i[0]}'>0</div>`)
+            .appendTo(bookCounter);
+        }
+
+
+        // Edit pre-passed items' labels
         editAllLabels(function () {
             getBookInstanceInfo(this.value, data => {
                 this.label = getBookInstanceRepresentation(data);
             })
         }, choices);
 
+        // I can't call the function immediately, since it takes some time to fetch data
+        // Two defered functions are set, because one might be too early
         setTimeout(() => $("#id_books.choicesjs")[0].choices._renderItems(), 200);
         setTimeout(() => $("#id_books.choicesjs")[0].choices._renderItems(), 5000);
 
+        // Create message-list in DOM
         let messageList = $("<ul></ul>").addClass("log-list");
         $("nav#nav-sidebar").append(messageList);
 
+        // Add event listener responsible for handling both adding and deletion
         choicesElement.on('change', (event) => {
             let item = event.detail.value;
             if (choices.getValue(true).indexOf(item) == -1) {
