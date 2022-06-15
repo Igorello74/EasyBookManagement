@@ -98,6 +98,9 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
                 title: `Создать новый экземпляр с #${id}`
             })
             choicesInstance.removeActiveItemsByValue(id);
+
+            // Decrease 'added' counter
+            calculateCounters(null, null, null, special_decrease=true);
         }
     );
 }
@@ -121,7 +124,32 @@ function createRemovalMessage(id, messageList, choicesInstance) {
     $(`.log-list__item--add#message-${id}`).last().addClass("log-list__item--stricken");
 }
 
-
+function calculateCounters(addition, item, initialSet, special_decrease = false) {
+    if (!special_decrease) {
+        if (addition) {
+            counter_overall.innerText = +counter_overall.innerText + 1;
+            if (!initialSet.has(item)) { // if this item wasn't present initially
+                counter_added.innerText = +counter_added.innerText + 1;
+            }
+            else {
+                counter_deleted.innerText = +counter_deleted.innerText - 1;
+            }
+        }
+        else {
+            counter_overall.innerText = +counter_overall.innerText - 1;
+            if (initialSet.has(item)) {
+                counter_deleted.innerText = +counter_deleted.innerText + 1;
+            }
+            else {
+                counter_added.innerText = +counter_added.innerText - 1;
+            }
+        }
+    }
+    else {
+        counter_added.innerText = +counter_added.innerText - 1;
+        counter_overall.innerText = +counter_overall.innerText - 1;
+    }
+}
 $(() => {
     var choicesElement = $("#id_books.choicesjs");
 
@@ -141,8 +169,8 @@ $(() => {
         let bookCounter = $("<div>")
             .insertAfter(".form-row:last-child")
             .addClass("form-row book-counter");
-        
-        bookCounter.append("<h1>Счётчики</h1>")
+
+        bookCounter.append("<h1>Счётчики</h1>");
 
         let iterated = new Map([
             ['added', 'выдано:'],
@@ -152,13 +180,14 @@ $(() => {
 
         for (const i of iterated) {
             $("<div>")
-            .addClass("book-counter__inner")
-            .append(`<label class='book-counter__label'>${i[1]}</label>`)
-            .append(`<div class='book-counter__number book-counter__number--${i[0]}'
+                .addClass("book-counter__inner")
+                .append(`<label class='book-counter__label'>${i[1]}</label>`)
+                .append(`<div class='book-counter__number book-counter__number--${i[0]}'
             id='counter_${i[0]}'>0</div>`)
-            .appendTo(bookCounter);
+                .appendTo(bookCounter);
         }
 
+        counter_overall.innerText = initialSet.size;
 
         // Edit pre-passed items' labels
         editAllLabels(function () {
@@ -181,14 +210,17 @@ $(() => {
             let item = event.detail.value;
             if (choices.getValue(true).indexOf(item) == -1) {
                 createRemovalMessage(item, messageList, choices);
+                calculateCounters(false, item, initialSet);
             }
             else {
                 if (isTwiceOrMore(choices.getValue(true), item)) {
                     choices.removeActiveItemsByValue(item);
                     createRemovalMessage(item, messageList, choices);
+                    calculateCounters(false, item, initialSet);
                 }
                 else {
                     createAdditionMessage(item, messageList, choices);
+                    calculateCounters(true, item, initialSet);
                 }
             }
         });
