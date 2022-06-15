@@ -1,3 +1,4 @@
+/* -----LOG LIST----- */
 .log-list {
     padding: 0;
     margin: 0;
@@ -30,4 +31,33 @@
 
 .log-list__item--stricken {
     text-decoration: line-through;
+}
+
+
+/* -----BOOK COUNTER----- */
+.book-counter {
+    text-align: center;
+}
+
+.book-counter__inner {
+    margin: 0 5px;
+    float: left;
+}
+
+label.book-counter__label {
+    width: auto;
+    float: none;
+    padding: 0;
+}
+
+.book-counter__number {
+    font-size: 4em;
+}
+
+.book-counter__number--added {
+    color: #10e621;
+}
+
+.book-counter__number--deleted {
+    color: #79aec8;
 }
