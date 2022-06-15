@@ -163,7 +163,12 @@ $(() => {
         // (it might happen when one rapidly scans codes)
         $(".choices__input").on("keydown", event => event.key != "Enter");
 
-        let initialSet = new Set($(".choicesjs")[0].value.split(','));
+        let choicesValue = $(".choicesjs")[0].value;
+        let initialSet = new Set();
+
+        if (choicesValue) {
+            initialSet = new Set(choicesValue.split(','));
+        }
 
         // Add book counter after all formfields
         let bookCounter = $("<div>")
