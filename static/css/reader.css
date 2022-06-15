@@ -37,6 +37,9 @@
 /* -----BOOK COUNTER----- */
 .book-counter {
     text-align: center;
+    width: fit-content;
+    border: 1px solid var(--hairline-color);
+    border-top: none;
 }
 
 .book-counter__inner {
@@ -48,6 +51,7 @@ label.book-counter__label {
     width: auto;
     float: none;
     padding: 0;
+    margin-bottom: -12px;
 }
 
 .book-counter__number {
@@ -60,4 +64,21 @@ label.book-counter__label {
 
 .book-counter__number--deleted {
     color: #79aec8;
+}
+
+/* -----ETC----- */
+.related-widget-wrapper {
+    overflow: unset;
+}
+
+div.choices__list--multiple .choices__item {
+    font-size: 13px;
+}
+
+a.related-widget-wrapper-link {
+    display: none;
+}
+
+div.choices {
+    margin-bottom: 0;
 }
