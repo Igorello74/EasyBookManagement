@@ -142,6 +142,8 @@ $(() => {
             .insertAfter(".form-row:last-child")
             .addClass("form-row book-counter");
         
+        bookCounter.append("<h1>Счётчики</h1>")
+
         let iterated = new Map([
             ['added', 'выдано:'],
             ['deleted', 'принято:'],
