@@ -1,4 +1,6 @@
+from statistics import mode
 from django.db import models
+
 
 class Book(models.Model):
     """
@@ -17,19 +19,24 @@ class Book(models.Model):
         verbose_name="автор(-ы)",
         help_text="Авторы книги (сокращённо) через запятую",
     )
-    inventory_number = models.BigIntegerField(
-        verbose_name="инвентарный номер"
+    inventory_number = models.CharField(
+        verbose_name="инвентарный номер", blank=True, max_length=20
     )
 
     # Publication info
-    year = models.SmallIntegerField(verbose_name="год издания")
-    publisher = models.CharField(
-        verbose_name="издательство", max_length=20)
-    edition = models.SmallIntegerField(verbose_name='номер издания')
+    year = models.SmallIntegerField(verbose_name="год издания",
+                                    null=True, blank=True)
+    publisher = models.CharField(verbose_name="издательство", max_length=20,
+                                 blank=True)
+    edition = models.SmallIntegerField(verbose_name='номер издания',
+                                       null=True, blank=True)
     city = models.CharField(
         max_length=30, verbose_name="город издания",
-        help_text='город издания книги, без "г. "'
+        help_text='город издания книги, без "г. "',
+        blank=True
     )
+
+    notes = models.TextField(blank=True, verbose_name="заметки")
 
     # Educational info
     grade = models.CharField(
@@ -66,7 +73,7 @@ class BookInstance(models.Model):
     barcode = models.CharField(
         primary_key=True,
         unique=True,
-        max_length=8,
+        max_length=30,
         verbose_name="Штрихкод",
         help_text="идентификатор книги, уникальный для каждого "
         "экземпляра; совпадает с номером штрихкода на наклейке"
@@ -103,7 +110,7 @@ class BookInstance(models.Model):
     )
 
     def __str__(self):
-        return str(self.book)
+        return f"{self.barcode} · {self.book}"
 
     class Meta:
         ordering = ["barcode"]
