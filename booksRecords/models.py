@@ -110,7 +110,7 @@ class BookInstance(models.Model):
     )
 
     def __str__(self):
-        return f"{self.barcode} · {self.book}"
+        return f"#{self.barcode} · {self.book}"
 
     class Meta:
         ordering = ["barcode"]
