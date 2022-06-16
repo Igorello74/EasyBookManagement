@@ -109,7 +109,7 @@ function createAdditionMessage(id, messageList, choicesInstance) {
     let messageObj = createMessage(
         messageList,
         'log-list__item log-list__item--add',
-        `Книга <a class="log-list__book-id" href="#">#${id}</a> была добавлена`
+        `Книга <a class="log-list__book-id" href="#">#${id}</a> была выдана`
     ).attr("id", `message-${id}`);
     updateMessageInfo(id, messageObj, choicesInstance, true);
 }
@@ -118,7 +118,7 @@ function createRemovalMessage(id, messageList, choicesInstance) {
     let messageObj = createMessage(
         messageList,
         'log-list__item log-list__item--delete',
-        `Книга <a class="log-list__book-id" href="#">#${id}</a> была удалена`
+        `Книга <a class="log-list__book-id" href="#">#${id}</a> была принята`
     ).attr("id", `message-${id}`);
     updateMessageInfo(id, messageObj, choicesInstance);
     $(`.log-list__item--add#message-${id}`).last().addClass("log-list__item--stricken");
