@@ -100,7 +100,7 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
             choicesInstance.removeActiveItemsByValue(id);
 
             // Decrease counters
-            calculateCounters(null, null, null, special_decrease=true);
+            calculateCounters(null, null, null, special_decrease = true);
         }
     );
 }
@@ -195,6 +195,10 @@ $(() => {
         bookCounter.children().last().addClass("book-counter__inner--overall");
 
         counter_overall.innerText = initialSet.size;
+
+
+        // Add autocaps functionality to "profile" field
+        id_profile.oninput = function () { this.value = this.value.toUpperCase() }
 
         // Edit pre-passed items' labels
         editAllLabels(function () {
