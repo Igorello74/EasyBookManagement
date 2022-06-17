@@ -1,3 +1,4 @@
+from pyexpat import model
 from django.db import models
 
 import booksRecords.models
@@ -48,6 +49,13 @@ class Reader(models.Model):
         blank=True,
     )
 
+    profile = models.CharField(
+        max_length=20,
+        verbose_name="профиль",
+        help_text="например, ИТ, ТЕХ и т. п. (заглавными буквами)",
+        blank=True
+    )
+
     first_lang = models.CharField(
         max_length=2,
         choices=LANGUAGES,
@@ -67,7 +75,8 @@ class Reader(models.Model):
         db_table='bookTaking',
         blank=True,
         verbose_name='книги',
-        limit_choices_to={'status': booksRecords.models.BookInstance.IN_STORAGE}
+        limit_choices_to={
+            'status': booksRecords.models.BookInstance.IN_STORAGE}
     )
 
     def __str__(self):
