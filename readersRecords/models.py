@@ -76,7 +76,8 @@ class Reader(models.Model):
         blank=True,
         verbose_name='книги',
         limit_choices_to={
-            'status': booksRecords.models.BookInstance.IN_STORAGE}
+            'status': booksRecords.models.BookInstance.IN_STORAGE},
+        related_name="taken_by"
     )
 
     def __str__(self):
