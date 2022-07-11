@@ -89,6 +89,13 @@ class BookInstance(models.Model):
         (EXPIRED, "истёк срок возврата"),
         (WRITTEN_OFF, "снята с учёта")
     )
+
+    STATUS_CODES = {
+        ON_HANDS: "on hands",
+        IN_STORAGE: "in storage",
+        EXPIRED: "expired",
+        WRITTEN_OFF: "written off"
+    }
     status = models.PositiveSmallIntegerField(
         choices=STATUSES,
         editable=False,
@@ -110,6 +117,10 @@ class BookInstance(models.Model):
 
     def __str__(self):
         return f"#{self.barcode} · {self.book}"
+
+    @classmethod
+    def get_status_code(cls, status):
+        return cls.STATUS_CODES.get(status, "invalid status")
 
     class Meta:
         ordering = ["barcode"]
