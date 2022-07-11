@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from . import models
@@ -6,38 +7,33 @@ from . import models
 
 @admin.register(models.Book)
 class BookAdmin(admin.ModelAdmin):
+    @admin.display(description="Количество экземпляров")
     def number_of_instances(self):
         return self.bookinstance_set.count()
-    number_of_instances.short_description = "Количество экземпляров"
 
     search_fields = ['name', 'authors', 'subject',
                      'grade', 'isbn', 'inventory_number']
 
     list_display = (
-        'authors',
         'name',
-        'isbn',
+        'authors',
         'inventory_number',
+        'subject',
+        'grade',
         number_of_instances,
     )
 
     fieldsets = (
-        ("Идентификаторы", {'fields':
-                            ('isbn', 'inventory_number')
-                            }),
+        ('Основная информация', {'fields': ('name', 'authors')}),
 
-        ('Основная информация', {'fields':
-                                 ('name', 'authors')
-                                 }),
+        ('Информация об издании',
+         {'fields': ('publisher', 'city', 'year', 'edition')}),
 
-        ('Информация об издании', {'fields':
-                                   ('publisher', 'city',
-                                    'year', 'edition')
-                                   }),
+        ("Идентификаторы",
+         {'fields': ('isbn', 'inventory_number')}),
 
-        ("Учебная информация", {'fields':
-                                ('grade', 'subject')
-                                }),
+        ("Учебная информация",
+         {'fields': ('grade', 'subject')}),
     )
 
 
@@ -56,7 +52,18 @@ class BookInstanceAdmin(admin.ModelAdmin):
         else:
             return "нет"
 
-    list_display = ('barcode', 'book', 'status')
+    @admin.display(description="название")
+    @mark_safe
+    def get_book_name_with_link(self, obj):
+        href = reverse("admin:booksRecords_book_change", args=(obj.book.id,))
+        return (f'<a href="{href}" title="Редактировать книгу (не экземпляр)"'
+        f'target="_blank" rel="noopener noreferrer">{obj.book.name}</a>')
+    
+    @admin.display(description="автор")
+    def get_book_authors(self, obj):
+        return obj.book.authors
+
+    list_display = ('barcode', 'get_book_name_with_link', 'get_book_authors', 'status')
     readonly_fields = ('status', 'get_taken_by')
     fields = ('status', 'barcode', 'book', "notes", 'get_taken_by')
     autocomplete_fields = ['book']
