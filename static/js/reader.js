@@ -21,7 +21,7 @@ function isTwiceOrMore(array, item) {
 
 function createMessage(messageList, messageClass, messageContent) {
     let message = $(`<li></li>`).html(messageContent).addClass(messageClass).appendTo(messageList);
-    message[0].scrollIntoView();
+    window['nav-sidebar'].scrollTop = 1000000000;
     return message;
 }
 
