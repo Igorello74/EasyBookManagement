@@ -43,7 +43,7 @@ class Book(models.Model):
         help_text="Может быть диапазоном, к примеру: \"7-9\""
     )
     subject = models.CharField(
-        verbose_name="предмет", max_length=20, blank=True,
+        verbose_name="предмет", max_length=100, blank=True,
         help_text='Например: "математика", "русский язык", '
         '"математика углублённая"'
     )
