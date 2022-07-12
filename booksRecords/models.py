@@ -52,7 +52,7 @@ class Book(models.Model):
     )
 
     def __str__(self):
-        return f"{self.authors}: {self.name}"
+        return f"{self.name} — {self.authors}"
 
     class Meta:
         indexes = [
