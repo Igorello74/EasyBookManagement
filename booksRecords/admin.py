@@ -22,6 +22,7 @@ class BookAdmin(admin.ModelAdmin):
         'grade',
         number_of_instances,
     )
+    empty_value_display = ''
 
     fieldsets = (
         ('Основная информация', {'fields': ('name', 'authors')}),
@@ -36,6 +37,12 @@ class BookAdmin(admin.ModelAdmin):
          {'fields': ('grade', 'subject')}),
     )
 
+    autocomplete_fields = ['subject']
+
+
+@admin.register(models.Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    search_fields = ['name']
 
 @admin.register(models.BookInstance)
 class BookInstanceAdmin(admin.ModelAdmin):

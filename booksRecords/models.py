@@ -1,3 +1,5 @@
+from statistics import mode
+from tabnanny import verbose
 from django.db import models
 
 
@@ -42,10 +44,11 @@ class Book(models.Model):
         max_length=5, verbose_name="класс", blank=True,
         help_text="Может быть диапазоном, к примеру: \"7-9\""
     )
-    subject = models.CharField(
-        verbose_name="предмет", max_length=100, blank=True,
-        help_text='Например: "математика", "русский язык", '
-        '"математика углублённая"'
+    subject = models.ForeignKey(
+        "Subject",
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        verbose_name="предмет"
     )
 
     def __str__(self):
@@ -62,6 +65,30 @@ class Book(models.Model):
         ordering = ['name']
         verbose_name = 'книга'
         verbose_name_plural = 'книги'
+
+
+class Subject(models.Model):
+    '''
+    Описывает предметы. Например: математика, второй французкий язык
+    '''
+
+    name = models.CharField(
+        unique=True,
+        max_length=100,
+        verbose_name="название",
+        help_text="""Желательно придерживаться какого-то единообразия. Например:
+вместо ̶ф̶р̶а̶н̶ц̶у̶з̶с̶к̶и̶й̶ ̶я̶з̶ы̶к̶ ̶в̶т̶о̶р̶о̶й — второй французский язык.
+Или: вместо ̶м̶а̶т̶е̶м̶а̶т̶и̶к̶а̶ ̶у̶г̶л̶у̶б̶л̶ё̶н̶н̶а̶я — углублённая математика"""
+    )
+
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = "предмет"
+        verbose_name_plural = "предметы"
 
 
 class BookInstance(models.Model):
