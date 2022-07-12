@@ -48,7 +48,8 @@ function getBookInstanceInfo(id, done, fail) {
 }
 
 function getBookInstanceRepresentation(data) {
-    return `<span class="choices__item-id">#${data.id}</span> · ${data.authors}: ${data.name}`
+    let title = `#${data.id} · ${data.name} — ${data.authors}`
+    return `<span  title="${title}">#${data.id} · ${data.name} — <span class="choices__item-authors">${data.authors}</span></span>`
 }
 
 function updateMessageInfo(id, messageELement, choicesInstance, addition = false) {

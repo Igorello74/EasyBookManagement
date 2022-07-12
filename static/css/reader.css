@@ -43,7 +43,7 @@
 }
 
 .book-counter__inner {
-    padding: 0 5px;
+    padding: 0 14px;
     float: left;
 }
 
@@ -86,4 +86,15 @@ a.related-widget-wrapper-link {
 
 div.choices {
     margin-bottom: 0;
+}
+
+.choices__item-authors {
+    font-weight: lighter;
+    
+    max-width: 100px;
+    display: inline-block;
+    vertical-align: text-bottom;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
