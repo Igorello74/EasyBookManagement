@@ -8,7 +8,7 @@ from . import models
 @admin.register(models.Book)
 class BookAdmin(admin.ModelAdmin):
     @admin.display(description="Количество экземпляров")
-    def number_of_instances(self):
+    def get_number_of_instances(self):
         return self.bookinstance_set.count()
 
     search_fields = ['name', 'authors', 'subject__name',
@@ -21,7 +21,7 @@ class BookAdmin(admin.ModelAdmin):
         'subject',
         'grade',
         'inventory_number',
-        number_of_instances,
+        get_number_of_instances,
     )
     empty_value_display = ''
 
@@ -70,8 +70,8 @@ class BookInstanceAdmin(admin.ModelAdmin):
         return obj.book.authors
 
     list_display = ('barcode', 'get_book_name_with_link',
-                    'get_book_authors', 'status')
-    readonly_fields = ('status', 'get_taken_by')
+                    'get_book_authors', 'status', 'get_taken_by')
+    readonly_fields = ('get_taken_by',)
     fields = ('status', 'barcode', 'book', "notes", 'get_taken_by')
     autocomplete_fields = ['book']
     search_fields = ('barcode', 'book__name', 'book__authors')
