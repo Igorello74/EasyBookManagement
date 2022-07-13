@@ -105,28 +105,21 @@ class BookInstance(models.Model):
         "экземпляра; совпадает с номером штрихкода на наклейке"
     )
 
-    IN_STORAGE = 0
-    ON_HANDS = 1
-    EXPIRED = 2
-    WRITTEN_OFF = 3
+    ACTIVE = 0
+    WRITTEN_OFF = 1
 
     STATUSES = (
-        (IN_STORAGE, "в хранилище"),
-        (ON_HANDS, "на руках"),
-        (EXPIRED, "истёк срок возврата"),
+        (ACTIVE, "на учёте"),
         (WRITTEN_OFF, "снята с учёта")
     )
 
     STATUS_CODES = {
-        ON_HANDS: "on hands",
-        IN_STORAGE: "in storage",
-        EXPIRED: "expired",
+        ACTIVE: "active",
         WRITTEN_OFF: "written off"
     }
     status = models.PositiveSmallIntegerField(
         choices=STATUSES,
-        editable=False,
-        default=IN_STORAGE,
+        default=ACTIVE,
         verbose_name="статус"
     )
 

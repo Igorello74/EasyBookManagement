@@ -75,8 +75,6 @@ class Reader(models.Model):
         db_table='bookTaking',
         blank=True,
         verbose_name='книги',
-        limit_choices_to={
-            'status': booksRecords.models.BookInstance.IN_STORAGE},
         related_name="taken_by"
     )
 
