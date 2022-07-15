@@ -56,7 +56,7 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
     getBookInstanceInfo(
         id,
         (data) => {
-            if (data.status != "in storage" && addition) {
+            if (data.status != "active" && addition) {
                 messageELement
                     .html(`Некорректный статус книги <a>#${id}</a>`)
                     .attr({
@@ -202,15 +202,15 @@ $(() => {
         id_profile.oninput = function () { this.value = this.value.toUpperCase() }
 
         // Edit pre-passed items' labels
-        editAllLabels(function () {
-            getBookInstanceInfo(this.value, data => {
-                this.label = getBookInstanceRepresentation(data);
-            })
-        }, choices);
+        getBookInstanceInfo($(".choicesjs")[0].value, data => {
+            editAllLabels(function () {
+                this.label = getBookInstanceRepresentation(data[this.value])
+            }, choices);
+        });
 
         // I can't call the function immediately, since it takes some time to fetch data
         // Two defered functions are set, because one might be too early
-        setTimeout(() => $("#id_books.choicesjs")[0].choices._renderItems(), 200);
+        setTimeout(() => $("#id_books.choicesjs")[0].choices._renderItems(), 200); // TODO: fix this timeout shit somehow
         setTimeout(() => $("#id_books.choicesjs")[0].choices._renderItems(), 5000);
 
         // Create message-list in DOM
