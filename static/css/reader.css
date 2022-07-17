@@ -98,3 +98,15 @@ div.choices {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+
+/* -----CHANGE LIST----- */
+.object-tools a.importlink {
+    background-image: url("../img/table icon.png");
+}
+
+.object-tools a.importlink {
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    padding-right: 33px;
+}
