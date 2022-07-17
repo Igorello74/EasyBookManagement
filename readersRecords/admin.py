@@ -14,6 +14,11 @@ class ReaderAdmin(admin.ModelAdmin):
 
     list_display = ("name", "role", "group", get_books)
     search_fields = ("name", 'group')
+    fieldsets = (
+        ("Основная информация", {"fields": ('name', 'role', 'notes')}),
+        ("Учебная информация", {"fields": ('group', 'profile', 'first_lang', 'second_lang')}),
+        ("Книги", {"fields": ("books",), "classes": ("books",)})
+    )
     formfield_overrides = {
         models.ManyToManyField: {'widget': ChoicesjsTextWidget}
     }

@@ -173,7 +173,7 @@ $(() => {
 
         // Add book counter after all formfields
         let bookCounter = $("<div>")
-            .insertAfter(".form-row:last-child")
+            .appendTo(".books")
             .addClass("form-row book-counter");
 
         bookCounter.append("<h1>Счётчики</h1>");
