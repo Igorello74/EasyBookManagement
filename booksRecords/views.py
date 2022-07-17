@@ -7,7 +7,9 @@ from .models import BookInstance
 
 @staff_member_required
 def get_bookInstance_info(request, ids: str):
-    objs: dict = BookInstance.objects.in_bulk(ids.split(','))
+    ids = ids.split(',')
+    multiple = len(ids) != 1  # set multiple True if there're more than 1 id
+    objs: dict = BookInstance.objects.in_bulk(ids)
     resp = {}
 
     for i in objs.values():
@@ -24,7 +26,18 @@ def get_bookInstance_info(request, ids: str):
             'taken_by': taken_by
         }
 
-    if len(resp) == 1:
-        resp = list(resp.values())[0]
-    
+    if not multiple:
+        if resp:
+            resp = list(resp.values())[0]
+        else:
+            id = ids[0]
+            return JsonResponse({
+                'admin_url': f'{reverse("admin:booksRecords_bookinstance_add")}?barcode={id}',
+                'error': f"No bookInstance with id={id} found"
+            }, json_dumps_params={'ensure_ascii': False}, status=404)
+
+    elif len(resp) < len(ids):
+        for id in ids:
+            resp.setdefault(id, {"error": "Not found"})
+
     return JsonResponse(resp, json_dumps_params={'ensure_ascii': False})
