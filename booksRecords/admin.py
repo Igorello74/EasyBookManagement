@@ -46,13 +46,22 @@ class BookAdmin(admin.ModelAdmin):
 @admin.register(models.BookInstance)
 class BookInstanceAdmin(admin.ModelAdmin):
     @admin.display(description="взята")
+    @mark_safe
     def get_taken_by(self, obj):
-        taken_by = obj.taken_by.all()
+        taken_by = list(obj.taken_by.all())
         if taken_by:
-            if len(taken_by) > 1:
-                return mark_safe(
-                    f"<strong style='color: red; font-size: 2em'>!!!</strong> {'; '.join(str(i) for i in taken_by)}"
+            for ind, reader in enumerate(taken_by):
+                href = reverse(
+                    "admin:readersRecords_reader_change", args=(reader.id,)
                 )
+                taken_by[ind] = (
+                    f'<a href="{href}" target="_blank" rel="noopener noreferrer",>{reader}</a>'
+                )
+
+            if len(taken_by) > 1:
+                return ("<strong style='color: red; font-size: 2em'>!!!</strong>" +
+                        '; '.join(i for i in taken_by))
+
             else:
                 return taken_by[0]
         else:
