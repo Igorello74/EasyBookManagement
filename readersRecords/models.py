@@ -33,7 +33,8 @@ class Reader(models.Model):
 
     name = models.CharField(
         max_length=100,
-        verbose_name="полное имя"
+        verbose_name="фамилия, имя",
+        help_text="например, Иванов Иван"
     )
     notes = models.TextField(
         max_length=500,
@@ -45,14 +46,14 @@ class Reader(models.Model):
     group = models.CharField(
         max_length=3,
         verbose_name="класс",
-        help_text="номер и строчная литера класса без пробела",
+        help_text="номер и строчная литера класса без пробела, например: 10а",
         blank=True,
     )
 
     profile = models.CharField(
         max_length=20,
         verbose_name="профиль",
-        help_text="например, ИТ, ТЕХ и т. п. (заглавными буквами)",
+        help_text="например, ИТ, ТЕХ и т. п.",
         blank=True
     )
 
