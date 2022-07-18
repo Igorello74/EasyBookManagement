@@ -90,7 +90,7 @@ div.choices {
 
 .choices__item-authors {
     font-weight: lighter;
-    
+
     max-width: 100px;
     display: inline-block;
     vertical-align: text-bottom;
@@ -101,12 +101,16 @@ div.choices {
 
 
 /* -----CHANGE LIST----- */
-.object-tools a.importlink {
-    background-image: url("../img/table icon.png");
-}
-
-.object-tools a.importlink {
-    background-repeat: no-repeat;
+.importlink, .importlink:focus, .importlink:hover {
+    background: var(--object-tools-bg) url("../img/table icon.png") no-repeat;
     background-position: right 9px center;
-    padding-right: 33px;
+
+    display: block;
+    float: left;
+    padding: 3px 33px 3px 12px;
+    color: var(--object-tools-fg);
+    font-weight: 400;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
