@@ -9,11 +9,10 @@
     </a>
 </li>
 <li>
-    <!-- "url 'booksRecords:get_bookInstance_info' "E123" " -->
-    <form action='' method='POST' enctype='multipart/form-data'>
+    <form action="{% url 'readersRecords:import-xlsx' %}" method='POST' enctype='multipart/form-data'>
         {% csrf_token %}
         <label>
-            <input type="file" style="display: none;" onchange="this.closest('form').submit();" />
+            <input type="file" style="display: none;" name="file" onchange="this.closest('form').submit();" />
             <a class="importlink">Импортировать читателей из csv файла</a>
         </label>
     </form>
