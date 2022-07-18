@@ -3,16 +3,19 @@ such as import/export from/to json, csv, xlsx etc.
 """
 
 from openpyxl import load_workbook
+from .models import Reader
 
-# from .models import Reader
+
+class NameNotFoundError(LookupError):
+    ...
 
 
-def import_readers_from_xlsx(file, custom_headers: dict = {}):
+def import_from_xlsx(file, custom_headers: dict = {}):
     """Import readers from a xlsx file (a file object must be passed)
 
     If xlsx-table headers are different from default, you need to pass
     them as a second arg (you can omit some headers to leave them default).
-    If any column (except for name) is not present, it's left blank.
+    If any column (except for name) is not present, it's left blank in the model.
     Note: headers are case insensitive.
 
     Default headers:
@@ -21,7 +24,6 @@ def import_readers_from_xlsx(file, custom_headers: dict = {}):
         group   - group (for example: "10а", "2б"; with no space between)
         profile - profile
         notes   - notes
-        books   - books (for example: "E45,E123,E534")
         first_lang  - lang1 (lang code according to ISO 639-1, like en, ru)
         second_lang - lang2 (the same as lang1)
     """
@@ -32,36 +34,36 @@ def import_readers_from_xlsx(file, custom_headers: dict = {}):
         "group": "group",
         "profile": "profile",
         "notes": "notes",
-        "books": "books",
         "first_lang": "lang1",
         "second_lang": "lang2",
-    }
+    }  # TODO: maybe add books field
 
     custom_headers = {k: v.lower() for k, v in custom_headers.items()}
     headers.update(custom_headers)
     sheet = load_workbook(file, data_only=True).active
 
     # Make headers mapping
-    temp_mapping = {} # map custom headers to col indexes
-    for ind, value in enumerate(sheet.iter_cols(min_row=1, max_row=1, values_only=True)):
-        temp_mapping[value[0].lower()] = ind
-
-    mapping = {} # map standard keys to col indexes
+    temp_mapping = {}  # map custom headers to col indexes
+    for ind, row in enumerate(sheet.iter_cols(min_row=1, max_row=1, values_only=True)):
+        temp_mapping[row[0].lower()] = ind
+    mapping = {}  # map standard keys to col indexes
     for k, v in headers.items():
         if v in temp_mapping:
             mapping[k] = temp_mapping[v]
-    
-    del temp_mapping
+    del temp_mapping, headers
 
-    print(mapping)
+    if "name" not in mapping:
+        raise NameNotFoundError(
+            "Student's name wasn't presented in your sheet"
+        )
 
+    # Iterate through rows and save models
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        r = Reader()
+        for field, ind in mapping.items():
+            setattr(r, field, row[ind])
 
-# TODO: delete code piece below (it's a sample)
-with open(r"E:\Projects\EasyBookManagement\readersRecords\students.xlsx", 'rb') as f:
-    import_readers_from_xlsx(f, {
-        'name': 'имя',
-        'group': 'класс',
-        'profile': 'профиль',
-        'lang1': 'язык 1',
-        'lang2': 'язык 2',
-    })
+        if "role" not in mapping:
+            r.role = Reader.STUDENT
+
+        r.save()
