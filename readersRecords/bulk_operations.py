@@ -37,13 +37,31 @@ def import_readers_from_xlsx(file, custom_headers: dict = {}):
         "second_lang": "lang2",
     }
 
+    custom_headers = {k: v.lower() for k, v in custom_headers.items()}
     headers.update(custom_headers)
     sheet = load_workbook(file, data_only=True).active
 
     # Make headers mapping
-    for value in sheet.iter_cols(min_row=1, max_row=1, values_only=True):
-        print(value)
+    temp_mapping = {} # map custom headers to col indexes
+    for ind, value in enumerate(sheet.iter_cols(min_row=1, max_row=1, values_only=True)):
+        temp_mapping[value[0].lower()] = ind
+
+    mapping = {} # map standard keys to col indexes
+    for k, v in headers.items():
+        if v in temp_mapping:
+            mapping[k] = temp_mapping[v]
+    
+    del temp_mapping
+
+    print(mapping)
 
 
-with open("./students.xlsx", 'rb') as f:
-    import_readers_from_xlsx(f)
+# TODO: delete code piece below (it's a sample)
+with open(r"E:\Projects\EasyBookManagement\readersRecords\students.xlsx", 'rb') as f:
+    import_readers_from_xlsx(f, {
+        'name': 'имя',
+        'group': 'класс',
+        'profile': 'профиль',
+        'lang1': 'язык 1',
+        'lang2': 'язык 2',
+    })
