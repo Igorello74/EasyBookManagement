@@ -2,14 +2,16 @@
 
 {% block content %}
 {% if num_imported %}
-    Успешно добавлено {{ num_imported }} читателей!
+    <ul class="messagelist"><li class="success">Успешно добавлено {{ num_imported }} читателей.</li></ul>
 {% elif missing_columns %}
+<div class="errornote">
     В вашем файле отсутствуют следующие колонки:
     <ul>
         {% for col in missing_columns %}
         <li>{{ col }}</li>
         {% endfor %}
     </ul>
+</div>
 {% endif %}
 
 <form action="" method="post" enctype="multipart/form-data">
