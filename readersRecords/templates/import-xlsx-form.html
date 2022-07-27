@@ -1,16 +1,35 @@
 {% extends "admin/base_site.html" %}
 
+{% block extrastyle %}
+<style>
+    .errornote::before {
+        content: "!";
+        font-size: 2em;
+        color: red;
+        vertical-align: middle;
+        padding-right: 7.5px;
+    }
+</style>
+{% endblock %}
+
+
 {% block content %}
 {% if num_imported %}
-    <ul class="messagelist"><li class="success">Успешно добавлено {{ num_imported }} читателей.</li></ul>
+<ul class="messagelist">
+    <li class="success">Успешно добавлено {{ num_imported }} читателей.</li>
+</ul>
 {% elif missing_columns %}
 <div class="errornote">
-    В вашем файле отсутствуют следующие колонки:
+    Извините, не удалось найти следующие колонки в вашем файле:
     <ul>
         {% for col in missing_columns %}
         <li>{{ col }}</li>
         {% endfor %}
     </ul>
+</div>
+{% elif bad_format %}
+<div class="errornote">
+    Извините, представлен неподходящий формат файла. Допустимый формат: таблица Excel (<i>.xlsx</i>)
 </div>
 {% endif %}
 
@@ -26,6 +45,6 @@
         {{ form.file }}
     </p>
 
-    <p><input type="submit" value="Upload"/></p>
+    <p><input type="submit" value="Upload" /></p>
 </form>
 {% endblock %}
