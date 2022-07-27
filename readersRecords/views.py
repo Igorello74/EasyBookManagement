@@ -6,18 +6,12 @@ from .bulk_operations import import_from_xlsx, ColumnNotFoundError
 from .forms import ImportForm
 
 
-# status string constants
-SUCCESS = "success"
-NEW = "new"
-COLUMN_NOT_FOUND = "column_not_found"
-
-
-def render_import_xlsx(request, status: int = NEW, err_obj: ColumnNotFoundError = None, num_imported: int = 0):
+def render_import_xlsx(request, err_obj: ColumnNotFoundError = None, num_imported: int = 0):
     context = {'form': ImportForm}
 
-    if status == COLUMN_NOT_FOUND:
+    if err_obj:
         context['missing_columns'] = err_obj.missing_columns
-    elif status == SUCCESS:
+    elif num_imported:
         context['num_imported'] = num_imported
 
     return render(request, "import-xlsx-form.html", context)
@@ -38,10 +32,10 @@ def import_xlsx(request):
                     'second_lang': 'язык 2',
                 })
             except ColumnNotFoundError as e:
-                return render_import_xlsx(request, status=COLUMN_NOT_FOUND, err_obj=e)
+                return render_import_xlsx(request, err_obj=e)
 
             else:
-                return render_import_xlsx(request, status=SUCCESS, num_imported=num_imported)
+                return render_import_xlsx(request, num_imported=num_imported)
 
     elif request.method == "GET":
-        return render_import_xlsx(request, NEW)
+        return render_import_xlsx(request)
