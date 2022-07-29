@@ -1,6 +1,14 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Начало</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='readersRecords' %}">Формуляры читателей</a>
+&rsaquo; <a href="/admin/readersRecords/reader/">Читатели</a>
+&rsaquo; Импортировать читателей из excel файла
+</div>
+{% endblock %}
 
 {% block content %}
 {% if num_imported %}
