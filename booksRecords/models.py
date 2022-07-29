@@ -1,5 +1,3 @@
-from statistics import mode
-from tabnanny import verbose
 from django.db import models
 
 
@@ -81,9 +79,8 @@ class Subject(models.Model):
 Или: вместо ̶м̶а̶т̶е̶м̶а̶т̶и̶к̶а̶ ̶у̶г̶л̶у̶б̶л̶ё̶н̶н̶а̶я — углублённая математика"""
     )
 
-
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     class Meta:
         ordering = ['name']
