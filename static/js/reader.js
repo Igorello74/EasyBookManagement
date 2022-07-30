@@ -56,53 +56,55 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
     getBookInstanceInfo(
         id,
         (data) => {
-            if (data.status != "active" && addition) {
-                messageELement
-                    .html(`Некорректный статус книги <a>#${id}</a>`)
-                    .attr({
-                        "class": "log-list__item log-list__item--warning",
-                        title: `Возможно книга уже взята, списана или истёк срок возврата.`
-                    });
+            data = data[id]
+            if (!data.error) {
+                if (data.status != "active" && addition) {
+                    messageELement
+                        .html(`Некорректный статус книги <a>#${id}</a>`)
+                        .attr({
+                            "class": "log-list__item log-list__item--warning",
+                            title: `Возможно книга уже взята, списана или истёк срок возврата.`
+                        });
 
+                    messageELement.children("a").attr({
+                        "class": "log-list__book-id log-list__book-id--wrong",
+                        href: data.admin_url,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        title: "Узнать  подробности"
+                    })
+                }
+                messageELement.children("a").attr({
+                    href: data.admin_url,
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    title: `${data.authors}: ${data.name}`
+                });
+                if (addition) {
+                    editItemLabel(
+                        id,
+                        getBookInstanceRepresentation(data),
+                        choicesInstance
+                    );
+                }
+            }
+            else {
+                messageELement
+                    .html(`Код <a>#${id}</a> не существует`)
+                    .addClass("log-list__item--warning").removeClass("log-list__item--add log-list__item--delete");
                 messageELement.children("a").attr({
                     "class": "log-list__book-id log-list__book-id--wrong",
                     href: data.admin_url,
                     target: "_blank",
                     rel: "noopener noreferrer",
-                    title: "Узнать  подробности"
+                    title: `Создать новый экземпляр с #${id}`
                 })
-            }
+                choicesInstance.removeActiveItemsByValue(id);
 
-            messageELement.children("a").attr({
-                href: data.admin_url,
-                target: "_blank",
-                rel: "noopener noreferrer",
-                title: `${data.authors}: ${data.name}`
-            });
-            if (addition) {
-                editItemLabel(
-                    id,
-                    getBookInstanceRepresentation(data),
-                    choicesInstance
-                );
+                // Decrease counters
+                calculateCounters(null, null, null, special_decrease = true);
             }
         },
-        (jqxhr) => {
-            messageELement
-                .html(`Код <a>#${id}</a> не существует`)
-                .addClass("log-list__item--warning").removeClass("log-list__item--add log-list__item--delete");
-            messageELement.children("a").attr({
-                "class": "log-list__book-id log-list__book-id--wrong",
-                href: jqxhr.responseJSON.admin_url,
-                target: "_blank",
-                rel: "noopener noreferrer",
-                title: `Создать новый экземпляр с #${id}`
-            })
-            choicesInstance.removeActiveItemsByValue(id);
-
-            // Decrease counters
-            calculateCounters(null, null, null, special_decrease = true);
-        }
     );
 }
 
