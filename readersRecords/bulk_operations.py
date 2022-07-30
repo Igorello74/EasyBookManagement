@@ -52,14 +52,15 @@ def import_from_xlsx(file, headers: dict = {}) -> int:
         raise ColumnNotFoundError(missing_columns)
 
     if "name" not in mapping:
-        raise ColumnNotFoundError("name", headers['name'])
+        raise ColumnNotFoundError(["name"])
 
     # Iterate through rows and save models
     counter_saved = 0
     for column in sheet.iter_rows(min_row=2, values_only=True):
         r = Reader()
         for field, index in mapping.items():
-            setattr(r, field, column[index])
+            if column[index]:
+                setattr(r, field, column[index])
 
         if "role" not in mapping:
             r.role = Reader.STUDENT
