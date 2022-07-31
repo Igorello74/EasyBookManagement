@@ -79,13 +79,11 @@ WSGI_APPLICATION = 'EasyBookManagement.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'EasyBookManagement',
-        'HOST': 'localhost',
-        'CONN_MAX_AGE': None, # TODO: fix it (maybe)
-        'USER': 'postgres',
-        'PASSWORD': '123',
+        'NAME': os.environ.get('POSTGRES_NAME'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': 'db',
         'PORT': 5432,
-
     }
 }
 

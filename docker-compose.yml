@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:14 #TODO: replace by postgres:alpine
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  migration:
+    build: .
+    image: easybookmanagement-web
+    command: python manage.py migrate
+    volumes:
+      - .:/code
+    environment: 
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    depends_on:
+      db:
+        condition: service_healthy
+      
+  web:
+    image: easybookmanagement-web
+    command: "python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    environment: 
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+  
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    profiles:
+      - dev
