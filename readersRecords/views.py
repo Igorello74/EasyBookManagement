@@ -4,7 +4,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from .bulk_operations import ColumnNotFoundError, import_from_xlsx
+from .bulk_operations import ColumnNotFoundError, import_readers
 from .forms import ImportForm
 
 
@@ -29,12 +29,13 @@ def import_xlsx(request):
         form = ImportForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                num_imported = import_from_xlsx(request.FILES['file'], {
+                num_imported = import_readers(request.FILES['file'], {
                     'name': 'имя',
                     'group': 'класс',
                     'profile': 'профиль',
                     'first_lang': 'язык 1',
                     'second_lang': 'язык 2',
+                    'role': "роль"
                 })
             except (ColumnNotFoundError, BadZipFile) as e:
                 return render_import_xlsx(request, err_obj=e)
