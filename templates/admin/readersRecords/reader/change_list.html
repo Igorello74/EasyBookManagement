@@ -10,13 +10,7 @@
     </a>
 </li>
 <li>
-    <form action="{% url 'readers-import' %}" method='POST' enctype='multipart/form-data' id="import_form">
-        {% csrf_token %}
-        <label>
-            <input type="file" accept=".xlsx" style="display: none;" name="file" onchange="import_form.submit();" />
-            <a class="importlink">Импортировать читателей из Excel файла</a>
-        </label>
-    </form>
+    <a href="{% url 'readers-import' %}" id="importlink">Импортировать читателей из Excel файла</a>
 </li>
 {% endif %}
 {% endblock %}

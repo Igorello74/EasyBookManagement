@@ -101,7 +101,7 @@ div.choices {
 
 
 /* -----CHANGE LIST----- */
-.importlink, .importlink:focus, .importlink:hover {
+#importlink {
     background: var(--object-tools-bg) url("../img/table icon.png") no-repeat;
     background-position: right 9px center;
 
