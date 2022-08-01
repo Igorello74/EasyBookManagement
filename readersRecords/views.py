@@ -19,7 +19,7 @@ def render_import_xlsx(request, err_obj: Exception = None, num_imported: int = 0
     elif num_imported:
         context['num_imported'] = num_imported
 
-    return render(request, "readersRecords/import-xlsx-form.html", context)
+    return render(request, "readersRecords/import-form.html", context)
 
 
 @staff_member_required
