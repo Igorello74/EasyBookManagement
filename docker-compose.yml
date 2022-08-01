@@ -18,7 +18,7 @@ services:
   migration:
     build: .
     image: easybookmanagement-web
-    command: python manage.py migrate
+    command: migrate
     volumes:
       - .:/code
     environment: 
@@ -31,7 +31,7 @@ services:
       
   web:
     image: easybookmanagement-web
-    command: "python manage.py runserver 0.0.0.0:8000"
+    command: runserver 0.0.0.0:8000
     volumes:
       - .:/code
     ports:
