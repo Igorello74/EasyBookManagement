@@ -17,11 +17,11 @@ from django.contrib import admin
 from django.urls import include, path
 
 import booksRecords.urls
-import readersRecords.urls
-
+import readersRecords.views
 
 urlpatterns = [
+    path('admin/readersRecords/reader/import/',
+         readersRecords.views.import_xlsx, name="readers-import"),
     path('admin/', admin.site.urls),
     path('books/', include(booksRecords.urls)),
-    path('readers/', include(readersRecords.urls))
 ]

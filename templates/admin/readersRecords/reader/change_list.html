@@ -10,7 +10,7 @@
     </a>
 </li>
 <li>
-    <form action="{% url 'readersRecords:import-xlsx' %}" method='POST' enctype='multipart/form-data' id="import_form">
+    <form action="{% url 'readers-import' %}" method='POST' enctype='multipart/form-data' id="import_form">
         {% csrf_token %}
         <label>
             <input type="file" accept=".xlsx" style="display: none;" name="file" onchange="import_form.submit();" />
