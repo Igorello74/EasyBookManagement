@@ -7,7 +7,8 @@ from .bulk_operations import ColumnNotFoundError, import_readers, BadFile
 from .forms import ImportForm
 
 
-def render_import_xlsx(request, err_obj: Exception = None, num_imported: int = 0):
+def render_import_xlsx(request, err_obj: Exception = None,
+                       created: int = 0, updated: int = 0):
     context = {'form': ImportForm}
 
     if err_obj:
@@ -15,8 +16,9 @@ def render_import_xlsx(request, err_obj: Exception = None, num_imported: int = 0
             context['missing_columns'] = err_obj.missing_columns
         elif isinstance(err_obj, BadFile):
             context['bad_format'] = True
-    elif num_imported:
-        context['num_imported'] = num_imported
+        
+    context['created'] = created
+    context['updated'] = updated
 
     return render(request, "readersRecords/import-form.html", context)
 
@@ -28,7 +30,7 @@ def import_xlsx(request):
         form = ImportForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                num_imported = import_readers(request.FILES['file'], {
+                result = import_readers(request.FILES['file'], {
                     'name': 'имя',
                     'group': 'класс',
                     'profile': 'профиль',
@@ -39,7 +41,7 @@ def import_xlsx(request):
             except (ColumnNotFoundError, BadFile) as e:
                 return render_import_xlsx(request, err_obj=e)
             else:
-                return render_import_xlsx(request, num_imported=num_imported)
+                return render_import_xlsx(request, **result)
 
     elif request.method == "GET":
         return render_import_xlsx(request)

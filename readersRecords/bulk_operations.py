@@ -59,9 +59,11 @@ class XlsxDictReader:
                 d[key] = self.restval
         return d
 
+
 def decode_file(file):
     for i in file:
         yield i.decode("utf-8", "replace")
+
 
 class CsvDictReader(csv.DictReader):
     @property
@@ -78,8 +80,10 @@ class CsvDictReader(csv.DictReader):
     def fieldnames(self, value):
         self._fieldnames = value
 
+
 class BadFile(Exception):
     ...
+
 
 class ColumnNotFoundError(LookupError):
     def __init__(self, missing_columns: list):
@@ -89,20 +93,27 @@ class ColumnNotFoundError(LookupError):
         super().__init__(message)
 
 
-def import_readers(file, headers: dict) -> int:
-    """Import readers from an xlsx or csv file (a file object must be passed)
+def import_readers(file, headers: dict) -> dict:
+    """Create or update readers from an xlsx or csv file
 
     file: a file-like object
 
-    headers: a mapping of headers (see below) to columns (your custom column names)
+    headers: a mapping of headers (see below)
+    to columns (your custom column names)
 
-    If name column is absent, a ColumnNotFoundError is raised. If role is not provided,
-    it's set STUDENT by default. Note: headers are case insensitive.
+    If id is not provided in a row, it's considered to be a new reader,
+    if id is present, this entry is updated.
 
-    Returns num of readers imported.
+    If name column is absent, a ColumnNotFoundError is raised.
+    If role is not provided, it's set STUDENT by default.
+    Note: headers are case insensitive.
+
+    Returns {"created": "<num of readers created>",
+             "updated": "<num of readers updated>"}
 
     Possible headers:
-        name, role, group, profile, notes, first_lang (ISO 639-1, like en, ru), second_lang
+        name, role, group, profile, notes,
+        first_lang (ISO 639-1, like en, ru), second_lang
     """
     POSSIBLE_HEADERS = ("id", "name", "role", "group", "profile",
                         "notes", "first_lang", "second_lang")
@@ -118,22 +129,43 @@ def import_readers(file, headers: dict) -> int:
         except csv.Error:
             raise BadFile("Invalid file, you must provide csv or xlsx")
 
+    id_col = headers.get('id', 'id')
 
     # Iterate through rows and save models
-    objs = []  # readers are buffered and then saved to db
+    objs_to_create = []  # rows with no id provided are appended to it
+    objs_to_update = []  # rows with id are appended to it
+
     for column in file_reader:
         r = Reader()
+        if id_col in column:
+            # if id is present, it's an update operation
+            objs_to_update.append(r)
+            r.id = column[id_col]
+            create = False
+        else:
+            objs_to_create.append(r)
+            create = True
+
         for field, col_name in headers.items():
+            # field is the standard field name from POSSIBLE_HEADERS,
+            # col_name is custom column name mapped to the field
             if val := column.get(col_name):
+                # if this column is present in the table
                 setattr(r, field, val)
 
-        if not r.role:
+        if not r.role and create:
             r.role = Reader.STUDENT
         if not r.name:
             raise ColumnNotFoundError(['name'])
 
-        objs.append(r)
-    
-    Reader.objects.bulk_create(objs)
+    created = updated = 0
 
-    return len(objs)
+    if objs_to_create:
+        created = len(Reader.objects.bulk_create(objs_to_create))
+    if objs_to_update:
+        fields = [k for k, v in headers.items()
+                  if v in file_reader.fieldnames and k != "id"]
+
+        updated = Reader.objects.bulk_update(objs_to_update, fields)
+
+    return {'created': created, 'updated': updated}

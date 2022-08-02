@@ -11,11 +11,18 @@
 {% endblock %}
 
 {% block content %}
-{% if num_imported %}
+{% if created %}
 <ul class="messagelist">
-    <li class="success">Успешно добавлено {{ num_imported }} читателей.</li>
+    <li class="success">Успешно добавлено {{ created }} читателей.</li>
 </ul>
-{% elif missing_columns %}
+{% endif %}
+{% if updated %}
+<ul class="messagelist">
+    <li class="success">Успешно изменена информация {{ updated }} читателей.</li>
+</ul>
+{% endif %}
+
+{% if missing_columns %}
 <ul class="messagelist">
     <li class="error">
         Не удалось найти следующие колонки в файле:
