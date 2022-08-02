@@ -12,10 +12,11 @@ class ReaderAdmin(admin.ModelAdmin):
         return ' 🔷 '.join(str(i.book.name) for i in self.books.all())
     get_books.short_description = "книги"
 
-    list_display = ("name", "role", "group", get_books)
-    search_fields = ("name", 'group')
+    list_display = ("id", "name", "role", "group", get_books)
+    search_fields = ("name", 'group', 'id')
+    readonly_fields = ("id",)
     fieldsets = (
-        ("Основная информация", {"fields": ('name', 'role', 'notes')}),
+        ("Основная информация", {"fields": ('name', 'role', 'id', 'notes')}),
         ("Учебная информация", {"fields": ('group', 'profile', 'first_lang', 'second_lang')}),
         ("Книги", {"fields": ("books",), "classes": ("books",)})
     )
