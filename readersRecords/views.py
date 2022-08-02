@@ -1,10 +1,9 @@
-from zipfile import BadZipFile
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from .bulk_operations import ColumnNotFoundError, import_readers
+from .bulk_operations import ColumnNotFoundError, import_readers, BadFile
 from .forms import ImportForm
 
 
@@ -14,7 +13,7 @@ def render_import_xlsx(request, err_obj: Exception = None, num_imported: int = 0
     if err_obj:
         if isinstance(err_obj, ColumnNotFoundError):
             context['missing_columns'] = err_obj.missing_columns
-        elif isinstance(err_obj, BadZipFile):
+        elif isinstance(err_obj, BadFile):
             context['bad_format'] = True
     elif num_imported:
         context['num_imported'] = num_imported
@@ -37,7 +36,7 @@ def import_xlsx(request):
                     'second_lang': 'язык 2',
                     'role': "роль"
                 })
-            except (ColumnNotFoundError, BadZipFile) as e:
+            except (ColumnNotFoundError, BadFile) as e:
                 return render_import_xlsx(request, err_obj=e)
             else:
                 return render_import_xlsx(request, num_imported=num_imported)

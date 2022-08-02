@@ -3,7 +3,7 @@ such as import/export from/to json, csv, xlsx etc.
 """
 
 import csv
-from collections import namedtuple
+from zipfile import BadZipFile
 
 from openpyxl import load_workbook
 
@@ -59,6 +59,27 @@ class XlsxDictReader:
                 d[key] = self.restval
         return d
 
+def decode_file(file):
+    for i in file:
+        yield i.decode("utf-8", "replace")
+
+class CsvDictReader(csv.DictReader):
+    @property
+    def fieldnames(self):
+        if self._fieldnames is None:
+            try:
+                self._fieldnames = [str(i).lower() for i in next(self.reader)]
+            except StopIteration:
+                pass
+        self.line_num = self.reader.line_num
+        return self._fieldnames
+
+    @fieldnames.setter
+    def fieldnames(self, value):
+        self._fieldnames = value
+
+class BadFile(Exception):
+    ...
 
 class ColumnNotFoundError(LookupError):
     def __init__(self, missing_columns: list):
@@ -89,7 +110,14 @@ def import_readers(file, headers: dict) -> int:
                for k, v in headers.items() if k in POSSIBLE_HEADERS}
     assert "name" in headers, "Name is required!"
 
-    file_reader = XlsxDictReader(file)
+    try:
+        file_reader = XlsxDictReader(file)
+    except BadZipFile:
+        try:
+            file_reader = CsvDictReader(decode_file(file))
+        except csv.Error:
+            raise BadFile("Invalid file, you must provide csv or xlsx")
+
 
     # Iterate through rows and save models
     objs = []  # readers are buffered and then saved to db
