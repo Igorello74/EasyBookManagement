@@ -31,7 +31,7 @@ def import_xlsx(request):
         form = ImportForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                result = Reader.import_(request.FILES['file'], ["name"])
+                result = Reader.objects.import_from_file(request.FILES['file'], ["name"])
             except (ColumnNotFoundError, BadFile) as e:
                 return render_import_xlsx(request, err_obj=e)
             else:

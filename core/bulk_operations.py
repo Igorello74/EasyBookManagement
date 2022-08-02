@@ -92,32 +92,40 @@ class ColumnNotFoundError(LookupError):
         super().__init__(message)
 
 
-class BulkHandler:
+class BulkManager(models.Manager):
     """Implement some bulk operations on models,
     such as import/export from/to json, csv, xlsx etc.
+    You simply put the class as a model custom manager and access its
+    methods in a convinient way:
+        class MyModel(models.Model):
+            ...
+            objects = BulkManager({"name": "имя"...})
+        ...
+        ...
+        MyModel.objects.import_from_file(file, ["name"])
     """
 
-    def __init__(self, model: models.Model, headers_mapping: dict,
-                 pk_field="id"):
-        """Create an instance of the BulkHandler class.
+    def __init__(self, headers_mapping: dict,
+                 pk_field="id", *args, **kwargs):
+        """Create an instance of the BulkManager class.
 
         model: a django model class on which operations are held;
         headers_mapping: a mapping of model fields
           to column headers (custom column names);
-        pk_field: name of model's primary key (usually it is"id")
+        pk_field: name of model's primary key (usually it is "id")
         """
-        self.model = model
+        super().__init__(*args, **kwargs)
         self.headers_mapping = {
             k: v.lower() for k, v in headers_mapping.items()
         }
         self.pk_field = pk_field
 
-    def create_or_update(self, file, required_fields: list = []) -> dict:
+    def import_from_file(self, file, required_fields: list = []) -> dict:
         """Create or update model instancies from an xlsx or csv file
 
         file: a file-like object
 
-        If id is not provided in a row, it's considered to be a new reader,
+        If id is not provided in a row, a new instance is assumed,
         if id is present, this entry is updated.
 
         If any of required_fields is absent, a ColumnNotFoundError is raised.
@@ -141,20 +149,20 @@ class BulkHandler:
         objs_to_create = []  # rows with no id provided are appended to it
         objs_to_update = []  # rows with id are appended to it
 
-        for column in file_reader:
+        for row in file_reader:
             obj = self.model()
-            id = column.get(self.pk_field)
+            id = row.get(self.pk_field)
             if id != "" and id is not None:
                 # if id is present, it's an update operation
                 objs_to_update.append(obj)
-                obj.id = column[id_col]
+                obj.id = row[id_col]
             else:
                 objs_to_create.append(obj)
 
             for field, col_name in self.headers_mapping.items():
                 # field is the standard field name from self.fields,
                 # col_name is custom column name mapped to the field
-                if val := column.get(col_name):
+                if val := row.get(col_name):
                     # if this column is present in the table
                     setattr(obj, field, val)
 

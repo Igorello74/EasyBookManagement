@@ -1,1 +1,1 @@
-from .bulk_operations import BulkHandler
+from .bulk_operations import BulkManager
