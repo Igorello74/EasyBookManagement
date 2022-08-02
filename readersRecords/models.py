@@ -26,6 +26,7 @@ class Reader(models.Model):
     role = models.CharField(
         choices=ROLE_CHOICES,
         max_length=3,
+        default=STUDENT,
         verbose_name="роль"
     )
 
