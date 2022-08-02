@@ -1,5 +1,6 @@
 from django.db import models
 
+from core import BulkHandler
 
 LANGUAGES = (
     ('en', 'Английский'),
@@ -93,3 +94,15 @@ class Reader(models.Model):
 
         verbose_name = "читатель"
         verbose_name_plural = 'читатели'
+
+
+reader_bulk_handler = BulkHandler(Reader, {
+    'name': 'имя',
+    'group': 'класс',
+    'profile': 'профиль',
+    'first_lang': 'язык 1',
+    'second_lang': 'язык 2',
+    'role': "роль"
+})
+
+Reader.import_ = reader_bulk_handler.create_or_update
