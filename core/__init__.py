@@ -1,1 +1,2 @@
-from .bulk_operations import BulkManager
+from core.bulk_operations import build_bulk_manager
+from core.factory import ObjectFactory

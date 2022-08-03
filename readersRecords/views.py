@@ -3,7 +3,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from core.bulk_operations import ColumnNotFoundError, BadFile
+from core.bulk_operations import BadFileError, ColumnNotFoundError
+
 from .forms import ImportForm
 from .models import Reader
 
@@ -15,9 +16,9 @@ def render_import_xlsx(request, err_obj: Exception = None,
     if err_obj:
         if isinstance(err_obj, ColumnNotFoundError):
             context['missing_columns'] = err_obj.missing_columns
-        elif isinstance(err_obj, BadFile):
+        elif isinstance(err_obj, BadFileError):
             context['bad_format'] = True
-        
+
     context['created'] = created
     context['updated'] = updated
 
@@ -31,8 +32,9 @@ def import_xlsx(request):
         form = ImportForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                result = Reader.objects.import_from_file(request.FILES['file'], ["name"])
-            except (ColumnNotFoundError, BadFile) as e:
+                result = Reader.objects.import_from_file(
+                    request.FILES['file'], ["name"])
+            except (ColumnNotFoundError, BadFileError) as e:
                 return render_import_xlsx(request, err_obj=e)
             else:
                 return render_import_xlsx(request, **result)

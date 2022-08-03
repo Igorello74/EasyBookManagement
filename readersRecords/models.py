@@ -1,6 +1,6 @@
 from django.db import models
 
-from core import BulkManager
+from core import build_bulk_manager
 
 LANGUAGES = (
     ('en', 'Английский'),
@@ -84,7 +84,7 @@ class Reader(models.Model):
         else:
             return self.name
 
-    objects = BulkManager({
+    objects = build_bulk_manager({
         'name': 'имя',
         'group': 'класс',
         'profile': 'профиль',
