@@ -1,4 +1,5 @@
 
+from django.contrib.admin import site as admin_site
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
@@ -11,7 +12,10 @@ from .models import Reader
 
 def render_import_xlsx(request, err_obj: Exception = None,
                        created: int = 0, updated: int = 0):
-    context = {'form': ImportForm}
+    context = {'form': ImportForm, 'title': "Импортировать читателей",
+               'is_nav_sidebar_enabled': True,
+               'available_apps': admin_site.get_app_list(request)
+               }
 
     if err_obj:
         if isinstance(err_obj, ColumnNotFoundError):
