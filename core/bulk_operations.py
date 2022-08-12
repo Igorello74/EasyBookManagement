@@ -58,6 +58,9 @@ class BulkManager(models.Manager):
 
         file: a file-like object
 
+        headers_mapping: a mapping of model fields
+         to column headers (custom column names);
+    
         If id is not provided in a row, a new instance is assumed,
         if id is present, this entry is updated.
 
@@ -65,8 +68,16 @@ class BulkManager(models.Manager):
         a ColumnNotFoundError is raised.
         Note: headers are case insensitive.
 
-        Returns {"created": "<num of instancies created>",
-                "updated": "<num of instancies updated>"}
+        Returns {"created": <num of instancies created>,
+                "updated": <num of instancies updated>}
+        
+        Example of usage:
+            class MyModel(models.Model):
+                ...
+                objects = BulkManager()
+            ...
+            ...
+            MyModel.objects.import_from_file(file, {"name": "имя"...})
         """
 
         file_reader = dict_readers.factory.get(file)
