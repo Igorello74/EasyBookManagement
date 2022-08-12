@@ -11,15 +11,17 @@ from .widgets import ChoicesjsTextWidget
 @admin.action(description='Экспортировать выбранных читателей')
 def export_to_file(modeladmin, request, queryset):
     file_path = queryset.export_to_file(
+        ".csv",
         {'id': 'id',
          'name': 'имя',
          'group': 'класс',
          'profile': 'профиль',
          'first_lang': 'язык 1',
          'second_lang': 'язык 2',
-         'role': "роль"
+         'role': "роль",
+         'books': "книги"
          },
-        ".csv"
+        ['books'],
     )
 
     return FileResponse(

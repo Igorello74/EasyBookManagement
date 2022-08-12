@@ -19,28 +19,40 @@ class ColumnNotFoundError(LookupError):
 
 
 class BulkQuerySet(models.QuerySet):
-    def export_to_file(self, headers_mapping: dict, format: str):
-        """Export objects from QuerySet to a file (.csv, .xlsx, etc.)
+    def export_to_file(self, format: str, headers_mapping: dict,
+                       related_fields=[]) -> str:
+        """Export objects to a file (.csv, .xlsx, etc.)
 
-        format: ".csv", ".xlsx" - check core.dict_writers
+        headers_mapping: a mapping of model fields
+         to column headers (custom column names);
+        format: ".csv", ".xlsx" - check core.dict_writers module
+
+        Returns "/path/to/tempfile"
+
+        Note: filename is meaningless (like "qe1rfF2csg1244"), so you'll
+        have to overwrite it in response
         """
-        with NamedTemporaryFile('w+', delete=False) as buffer:
+        with NamedTemporaryFile('w', delete=False) as buffer:
             file_writer = dict_writers.factory.get(
                 format,
                 f=buffer,
                 fieldnames=headers_mapping.values()
             )
-
+            if related_fields:
+                self = self.prefetch_related(*related_fields)
             file_writer.writeheader()
 
             for obj in self:
-                row = {header: getattr(obj, field)
-                       for field, header in headers_mapping.items()}
+                row = {}
+                for field, header in headers_mapping.items():
+                    val = getattr(obj, field)
+                    if field in related_fields:
+                        val = ' '.join(i.pk for i in val.all())
+                    row[header] = val
+
                 file_writer.writerow(row)
-                print(row)
 
             buffer.seek(0)
-            print(buffer.read())
             return buffer.name
 
 
@@ -60,7 +72,7 @@ class BulkManager(models.Manager):
 
         headers_mapping: a mapping of model fields
          to column headers (custom column names);
-    
+
         If id is not provided in a row, a new instance is assumed,
         if id is present, this entry is updated.
 
@@ -70,7 +82,7 @@ class BulkManager(models.Manager):
 
         Returns {"created": <num of instancies created>,
                 "updated": <num of instancies updated>}
-        
+
         Example of usage:
             class MyModel(models.Model):
                 ...
@@ -127,5 +139,6 @@ class BulkManager(models.Manager):
 
         return {'created': created, 'updated': updated}
 
-    def export_to_file(self, headers_mapping: dict, format: str):
-        return self.get_queryset().export_to_file(headers_mapping, format)
+    def export_to_file(self, *args, **kwargs):
+        """See BulkQuerySet.export_to_file"""
+        return self.get_queryset().export_to_file(*args, **kwargs)
