@@ -129,7 +129,7 @@ class BulkManager(models.Manager):
         created = updated = 0
 
         if objs_to_create:
-            created = self.model.objects.bulk_create(objs_to_create).count()
+            created = len(self.model.objects.bulk_create(objs_to_create))
         if objs_to_update:
             fields = [
                 k for k, v in headers_mapping.items()
