@@ -11,7 +11,7 @@ from .widgets import ChoicesjsTextWidget
 @admin.action(description='Экспортировать выбранных читателей')
 def export_to_file(modeladmin, request, queryset):
     file_path = queryset.export_to_file(
-        ".csv",
+        ".xlsx",
         {'id': 'id',
          'name': 'имя',
          'group': 'класс',
@@ -26,8 +26,10 @@ def export_to_file(modeladmin, request, queryset):
 
     return FileResponse(
         open(file_path, "rb"),
-        filename=datetime.now().strftime("Экспорт читателей %d-%m-%Y.csv"),
-        as_attachment=True, headers={"Content-Type": "text/csv"})
+        filename=datetime.now().strftime("Экспорт читателей %d-%m-%Y.xlsx"),
+        as_attachment=True,
+        headers={"Content-Type": "application/vnd.openxmlformats"
+                 "-officedocument.spreadsheetml.sheet"})
 
 
 @admin.register(Reader)

@@ -52,6 +52,7 @@ class BulkQuerySet(models.QuerySet):
 
                 file_writer.writerow(row)
 
+            file_writer.save()
             buffer.seek(0)
             return buffer.name
 
