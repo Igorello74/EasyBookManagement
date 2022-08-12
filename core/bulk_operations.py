@@ -1,10 +1,11 @@
 """Implement some bulk operations on models,
 such as import/export from/to json, csv, xlsx etc.
 """
+from tempfile import NamedTemporaryFile
 
 from django.db import models
 
-from core import dict_readers
+from core import dict_readers, dict_writers
 
 BadFileError = dict_readers.BadFileError
 
@@ -17,10 +18,39 @@ class ColumnNotFoundError(LookupError):
         super().__init__(message)
 
 
+class BulkQuerySet(models.QuerySet):
+    def export_to_file(self, headers_mapping: dict, format: str):
+        """Export objects from QuerySet to a file (.csv, .xlsx, etc.)
+
+        format: ".csv", ".xlsx" - check core.dict_writers
+        """
+        with NamedTemporaryFile('w+', delete=False) as buffer:
+            file_writer = dict_writers.factory.get(
+                format,
+                f=buffer,
+                fieldnames=headers_mapping.values()
+            )
+
+            file_writer.writeheader()
+
+            for obj in self:
+                row = {header: getattr(obj, field)
+                       for field, header in headers_mapping.items()}
+                file_writer.writerow(row)
+                print(row)
+
+            buffer.seek(0)
+            print(buffer.read())
+            return buffer.name
+
+
 class BulkManager(models.Manager):
     """Implement some bulk operations on models,
     such as import/export from/to json, csv, xlsx etc.
     """
+
+    def get_queryset(self):
+        return BulkQuerySet(self.model, using=self._db)
 
     def import_from_file(self, file, headers_mapping: dict,
                          required_fields: list = []) -> dict:
@@ -85,3 +115,6 @@ class BulkManager(models.Manager):
                 objs_to_update, fields)
 
         return {'created': created, 'updated': updated}
+
+    def export_to_file(self, headers_mapping: dict, format: str):
+        return self.get_queryset().export_to_file(headers_mapping, format)
