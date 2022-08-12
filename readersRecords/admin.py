@@ -1,9 +1,31 @@
+from datetime import datetime
+
 from django.contrib import admin
 from django.db import models
-
+from django.http import FileResponse
 
 from .models import Reader
 from .widgets import ChoicesjsTextWidget
+
+
+@admin.action(description='Экспортировать выбранных читателей')
+def export_to_file(modeladmin, request, queryset):
+    file_path = queryset.export_to_file(
+        {'id': 'id',
+         'name': 'имя',
+         'group': 'класс',
+         'profile': 'профиль',
+         'first_lang': 'язык 1',
+         'second_lang': 'язык 2',
+         'role': "роль"
+         },
+        ".csv"
+    )
+
+    return FileResponse(
+        open(file_path, "rb"),
+        filename=datetime.now().strftime("Экспорт читателей %d-%m-%Y.csv"),
+        as_attachment=True, headers={"Content-Type": "text/csv"})
 
 
 @admin.register(Reader)
@@ -17,7 +39,8 @@ class ReaderAdmin(admin.ModelAdmin):
     readonly_fields = ("id",)
     fieldsets = (
         ("Основная информация", {"fields": ('name', 'role', 'id', 'notes')}),
-        ("Учебная информация", {"fields": ('group', 'profile', 'first_lang', 'second_lang')}),
+        ("Учебная информация", {
+         "fields": ('group', 'profile', 'first_lang', 'second_lang')}),
         ("Книги", {"fields": ("books",), "classes": ("books",)})
     )
     formfield_overrides = {
@@ -25,6 +48,8 @@ class ReaderAdmin(admin.ModelAdmin):
     }
 
     list_filter = ("group",)
+
+    actions = [export_to_file]
 
     class Media:
         js = ('js/reader.js',)
