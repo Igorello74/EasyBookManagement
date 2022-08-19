@@ -89,9 +89,8 @@ class Reader(models.Model):
     class Meta:
         indexes = (
             models.Index(fields=['name']),
-            models.Index(fields=['role', 'name']),
-            models.Index(fields=['group', 'name']),
-
+            models.Index(fields=['role', 'group', 'name']),
+            models.Index(fields=['group']),
         )
         ordering = ['role', 'group', 'name']
 
