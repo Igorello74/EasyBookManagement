@@ -130,6 +130,12 @@ class BookInstance(models.Model):
         help_text="ссылка на модель Книга :Model:`booksRecord.Book`"
     )
 
+    represents_multiple = models.BooleanField(
+        verbose_name="Вид экземпляра",
+        default=False,
+        choices=((False, "индивидуальный"), (True, "множественный"))
+    )
+
     def __str__(self):
         return f"#{self.barcode} · {self.book}"
 
@@ -138,7 +144,6 @@ class BookInstance(models.Model):
         return cls.STATUS_CODES.get(status, "invalid status")
 
     class Meta:
-        ordering = ["barcode"]
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['book']),
