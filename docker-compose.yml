@@ -43,10 +43,11 @@ services:
     depends_on:
       migration:
         condition: service_completed_successfully
+    restart: unless-stopped
+    
   
   adminer:
     image: adminer
-    restart: always
     ports:
       - 8080:8080
     profiles:
