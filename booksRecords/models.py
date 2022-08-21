@@ -56,11 +56,9 @@ class Book(models.Model):
         indexes = [
             models.Index(fields=["name"]),
             models.Index(fields=['authors']),
-            models.Index(fields=['isbn']),
-            models.Index(fields=['inventory_number']),
-            models.Index(fields=["grade", "subject"])
+            models.Index(fields=["grade", "subject"]),
+            models.Index(fields=["subject"])
         ]
-        ordering = ['name']
         verbose_name = 'книга'
         verbose_name_plural = 'книги'
 
