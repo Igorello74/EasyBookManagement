@@ -34,24 +34,24 @@ def export_to_file(modeladmin, request, queryset):
 
 @admin.register(Reader)
 class ReaderAdmin(admin.ModelAdmin):
-    def get_books(self):
-        return ' 🔷 '.join(str(i.book.name) for i in self.books.all())
-    get_books.short_description = "книги"
+    @admin.display(description="Количество взятых книг")
+    def get_books_num(self):
+        return self.books.all().count()
 
-    list_display = ("id", "name", "role", "group", get_books)
+    list_display = ("name", "role", "group", get_books_num)
     search_fields = ("name", 'group', 'id')
     readonly_fields = ("id",)
     fieldsets = (
         ("Основная информация", {"fields": ('name', 'role', 'id', 'notes')}),
+        ("Книги", {"fields": ("books",), "classes": ("books",)}),
         ("Учебная информация", {
          "fields": ('group', 'profile', 'first_lang', 'second_lang')}),
-        ("Книги", {"fields": ("books",), "classes": ("books",)})
     )
     formfield_overrides = {
         models.ManyToManyField: {'widget': ChoicesjsTextWidget}
     }
 
-    list_filter = ("group",)
+    list_filter = ("role", "group",)
 
     actions = [export_to_file]
 

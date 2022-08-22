@@ -94,10 +94,13 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
                     .addClass("log-list__item--warning").removeClass("log-list__item--add log-list__item--delete");
                 messageELement.children("a").attr({
                     "class": "log-list__book-id log-list__book-id--wrong",
-                    href: data.admin_url,
-                    target: "_blank",
-                    rel: "noopener noreferrer",
+                    href: data.admin_url + "&_popup=1",
                     title: `Создать новый экземпляр с #${id}`
+                }).click(() => {
+                    window.open(data.admin_url + "&_popup=1",
+                        'container',
+                        'width=1600,height=700').focus();
+                    return false;
                 })
                 choicesInstance.removeActiveItemsByValue(id);
 
