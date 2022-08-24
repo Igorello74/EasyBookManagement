@@ -17,8 +17,8 @@ class BookPurchaseInline(admin.TabularInline):
         css = {"all": ("purchaseRecords/fix.css",)}
 
 
-@admin.register(models.BookInvoice)
-class BookInvoiceAdmin(admin.ModelAdmin):
+@admin.register(models.Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
     # def get_queryset(self, request):
     #     qs = super().get_queryset(request)
 

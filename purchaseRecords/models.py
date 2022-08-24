@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import F
 
 
-class BookInvoice(models.Model):
+class Invoice(models.Model):
     MAIN = "M"
     ADDITIONAL = "A"
 
@@ -42,7 +42,7 @@ class BookPurchase(models.Model):
         verbose_name="инвентарный номер", blank=True, max_length=20
     )
     invoice = models.ForeignKey(
-        BookInvoice, models.CASCADE, verbose_name="накладная")
+        Invoice, models.CASCADE, verbose_name="накладная")
     num_bought = models.PositiveSmallIntegerField(
         verbose_name="количество купленных экзепляров")
     price = models.DecimalField(
