@@ -12,8 +12,7 @@ class BookInvoice(models.Model):
         help_text="номер в книге суммарного учёта")
 
     number = models.CharField(
-        verbose_name="номер", help_text="номер накладной",
-        max_length=50, blank=True)
+        verbose_name="номер накладной", max_length=50, blank=True)
 
     date = models.DateField(verbose_name="дата", default=datetime.date.today)
     vendor = models.CharField(verbose_name="поставщик",
