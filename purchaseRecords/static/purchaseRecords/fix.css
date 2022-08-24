@@ -1,0 +1,7 @@
+.inline-group .tabular tr td.original {
+    opacity: 0;
+}
+
+.inline-group .tabular tr.has_original td {
+    padding-top: inherit !important;
+}
