@@ -7,12 +7,14 @@ class BookInvoice(models.Model):
     MAIN = "M"
     ADDITIONAL = "A"
 
-    number = models.CharField(
-        verbose_name="номер", help_text="номер накладной",
-        max_length=50, blank=True)
     custom_number = models.PositiveSmallIntegerField(
         verbose_name="учётный номер",
         help_text="номер в книге суммарного учёта")
+
+    number = models.CharField(
+        verbose_name="номер", help_text="номер накладной",
+        max_length=50, blank=True)
+
     date = models.DateField(verbose_name="дата", default=datetime.date.today)
     vendor = models.CharField(verbose_name="поставщик",
                               blank=True, max_length=50)
@@ -21,7 +23,7 @@ class BookInvoice(models.Model):
     ), default=MAIN, max_length=1)
 
     def __str__(self):
-        return f"{self.custom_number}-{self.date.year}"
+        return f"№ {self.custom_number} ({self.date.year})"
 
     class Meta:
         verbose_name = "накладная"
