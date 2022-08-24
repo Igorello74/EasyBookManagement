@@ -45,7 +45,7 @@ class BookInvoiceAdmin(admin.ModelAdmin):
     @admin.display(description="Общая сумма", empty_value=0)
     def get_grand_total(self, obj):
         return obj.bookpurchase_set.aggregate(
-            grand_total=Sum(F('price') * F('num_bought')))["grand_total"]
+            grand_total=Sum("sum"))["grand_total"]
 
     list_display = ("custom_number", "date", "number",
                     "get_purchases_num", "get_total_bought", 'get_grand_total')
@@ -55,4 +55,9 @@ class BookInvoiceAdmin(admin.ModelAdmin):
 
 @admin.register(models.BookPurchase)
 class BookPurchaseAdmin(admin.ModelAdmin):
+    @admin.display(description="Сумма", ordering="sum")
+    def get_sum(self, obj):
+        return obj.sum
+    list_display = ("book", "inventory_number",
+                    "invoice", "num_bought", "price", "get_sum")
     autocomplete_fields = ["invoice", "book"]
