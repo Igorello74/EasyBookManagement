@@ -41,7 +41,7 @@ class BookAdmin(admin.ModelAdmin):
             bookinstance__book=self).count()
 
     search_fields = ['name', 'authors', 'subject__name',
-                     'grade', 'isbn', 'inventory_number']
+                     'grade', 'isbn',]
 
     list_display = (
         'name',
@@ -62,7 +62,7 @@ class BookAdmin(admin.ModelAdmin):
          {'fields': ('publisher', 'city', 'year', 'edition')}),
 
         ("Идентификаторы",
-         {'fields': ('isbn', 'inventory_number')}),
+         {'fields': ('isbn',)}),
 
         ("Учебная информация",
          {'fields': ('grade', 'subject')}),
