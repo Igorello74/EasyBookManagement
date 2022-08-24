@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import models
+from django.db.models import F
 
 
 class BookInvoice(models.Model):
@@ -29,6 +30,11 @@ class BookInvoice(models.Model):
         verbose_name_plural = "накладные"
 
 
+class BookPurchaseManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().annotate(sum=F("price")*F("num_bought"))
+
+
 class BookPurchase(models.Model):
     book = models.ForeignKey("booksRecords.Book", models.CASCADE,
                              verbose_name="книга")
@@ -45,6 +51,8 @@ class BookPurchase(models.Model):
         verbose_name="заметки",
         blank=True
     )
+
+    objects = BookPurchaseManager()
 
     def __str__(self):
         return f"{self.inventory_number} ({self.book})"
