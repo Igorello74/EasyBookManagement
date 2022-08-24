@@ -37,7 +37,7 @@ class BookPurchaseManager(models.Manager):
 
 class BookPurchase(models.Model):
     book = models.ForeignKey("booksRecords.Book", models.CASCADE,
-                             verbose_name="книга")
+                             verbose_name="книга", related_name="purchases")
     inventory_number = models.CharField(
         verbose_name="инвентарный номер", blank=True, max_length=20
     )
