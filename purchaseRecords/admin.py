@@ -6,8 +6,8 @@ from . import models
 from .widgets import DateInput
 
 
-class BookPurchaseInline(admin.TabularInline):
-    model = models.BookPurchase
+class InventoryItemInline(admin.TabularInline):
+    model = models.InventoryItem
     autocomplete_fields = ["book"]
     formfield_overrides = {
         models.models.TextField: {'widget': forms.Textarea(attrs={"rows": 1})}
@@ -26,7 +26,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     # @admin.display(ordering="purchase_num",
     #                description="Количество наименований")
-    # def get_purchases_num(self, obj):
+    # def get_items(self, obj):
     #     return obj.purchase_num
 
     formfield_overrides = {
@@ -34,27 +34,30 @@ class InvoiceAdmin(admin.ModelAdmin):
     }
 
     @admin.display(description="Количество наименований")
-    def get_purchases_num(self, obj):
-        return obj.bookpurchase_set.count()
+    def get_items(self, obj):
+        return obj.items.count()
 
     @admin.display(description="Количество экземпляров", empty_value=0)
     def get_total_bought(self, obj):
-        return obj.bookpurchase_set.aggregate(
+        return obj.items.aggregate(
             Sum("num_bought"))["num_bought__sum"]
 
     @admin.display(description="Общая сумма, ₽", empty_value=0)
     def get_grand_total(self, obj):
-        return obj.bookpurchase_set.aggregate(
+        return obj.items.aggregate(
             grand_total=Sum("sum"))["grand_total"]
 
     list_display = ("custom_number", "date", "number",
-                    "get_purchases_num", "get_total_bought", 'get_grand_total')
+                    "get_items", "get_total_bought", 'get_grand_total')
     search_fields = ["custom_number", "number", "date"]
-    inlines = [BookPurchaseInline]
+    inlines = [InventoryItemInline]
+
+    class Media:
+        css = {"all": ("purchaseRecords/fix.css",)}
 
 
-@admin.register(models.BookPurchase)
-class BookPurchaseAdmin(admin.ModelAdmin):
+@admin.register(models.InventoryItem)
+class InventoryItemAdmin(admin.ModelAdmin):
     @admin.display(description="Сумма, ₽", ordering="sum")
     def get_sum(self, obj):
         return obj.sum
