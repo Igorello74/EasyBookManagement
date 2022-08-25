@@ -5,3 +5,7 @@
 .inline-group .tabular tr.has_original td {
     padding-top: inherit !important;
 }
+
+.field-price, .field-get_sum {
+    text-align: right;
+}

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from django.db.models import (Count, Sum, F)
+from django.db.models import Sum
 
 from . import models
 from .widgets import DateInput
@@ -42,7 +42,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         return obj.bookpurchase_set.aggregate(
             Sum("num_bought"))["num_bought__sum"]
 
-    @admin.display(description="Общая сумма", empty_value=0)
+    @admin.display(description="Общая сумма, ₽", empty_value=0)
     def get_grand_total(self, obj):
         return obj.bookpurchase_set.aggregate(
             grand_total=Sum("sum"))["grand_total"]
@@ -55,9 +55,13 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 @admin.register(models.BookPurchase)
 class BookPurchaseAdmin(admin.ModelAdmin):
-    @admin.display(description="Сумма", ordering="sum")
+    @admin.display(description="Сумма, ₽", ordering="sum")
     def get_sum(self, obj):
         return obj.sum
-    list_display = ("book", "inventory_number",
-                    "invoice", "num_bought", "price", "get_sum")
+    list_display = ("inventory_number", "book", "num_bought",
+                    "invoice", "price", "get_sum")
     autocomplete_fields = ["invoice", "book"]
+
+    class Media:
+        css = {"all": ("purchaseRecords/fix.css",)}
+

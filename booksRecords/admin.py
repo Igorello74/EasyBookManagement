@@ -125,6 +125,7 @@ class BookInstanceAdmin(admin.ModelAdmin):
                     "represents_multiple", 'status', 'get_taken_by')
     readonly_fields = ('get_taken_by_verbose',)
     list_filter = ("represents_multiple", 'status', 'book__grade')
+    radio_fields = {'represents_multiple': admin.VERTICAL}
     fields = ('status', 'barcode', 'book', "represents_multiple",
               "notes", 'get_taken_by_verbose')
     autocomplete_fields = ['book']

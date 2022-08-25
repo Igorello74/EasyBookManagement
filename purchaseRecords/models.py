@@ -9,7 +9,7 @@ class Invoice(models.Model):
     ADDITIONAL = "A"
 
     custom_number = models.PositiveSmallIntegerField(
-        verbose_name="учётный номер",
+        verbose_name="учётный номер (КСУ)",
         help_text="номер в книге суммарного учёта")
 
     number = models.CharField(
@@ -46,7 +46,7 @@ class BookPurchase(models.Model):
     num_bought = models.PositiveSmallIntegerField(
         verbose_name="количество купленных экзепляров")
     price = models.DecimalField(
-        max_digits=6, decimal_places=2, verbose_name="цена экземпляра")
+        max_digits=6, decimal_places=2, verbose_name="цена экземпляра, ₽")
     notes = models.TextField(
         verbose_name="заметки",
         blank=True
