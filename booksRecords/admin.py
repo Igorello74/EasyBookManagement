@@ -1,47 +1,49 @@
 from django.contrib import admin
+from django.db.models import Count, Q, Sum
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from . import models
-import readersRecords.models
 
 
 @admin.register(models.Book)
 class BookAdmin(admin.ModelAdmin):
-    @admin.display(description="Количество экземпляров")
+    @admin.display(description="Количество купленных экземпляров")
     @mark_safe
     def get_number_of_instances(self):
-        individual = self.bookinstance_set.filter(represents_multiple=False).count()
-        multiple = self.bookinstance_set.filter(represents_multiple=True).count()
         result = []
-        
-        if individual:
-            result.append(f"{individual} индвидуальных")
-        if multiple:
-            result.append(f"{multiple} общих")
-
-        if result:
-            result = ', '.join(result)
-        else:
-            result = "0"
+        result.append(str(self.num_purchased or 0))
+        if self.num_individual:
+            result.append(f"({self.num_individual} индивидуальных)")
 
         return ('<a href="{href}?book_id={book_id}" '
                 'title="Показать экземпляры"'
-                'target="_blank" rel="noopener noreferrer">{result}</a>'
+                '>{result}</a>'
                 ).format(
                     href=reverse(
                         "admin:booksRecords_bookinstance_changelist"),
                     book_id=self.id,
-                    result=result
+                    result=' '.join(result)
         )
 
     @admin.display(description="Количество взятых экземпляров")
     def get_num_of_taken_instances(self):
-        return readersRecords.models.Reader.books.through.objects.filter(
-            bookinstance__book=self).count()
+        return self.num_taken
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related('subject')
+        qs = qs.annotate(
+            num_taken=Count("bookinstance", filter=Q(
+                bookinstance__taken_by__isnull=False)),
+            num_purchased=Sum("inventory_items__num_bought", distinct=True),
+            num_individual=Count("bookinstance", filter=Q(
+                bookinstance__represents_multiple=False)),
+        )
+        return qs
 
     search_fields = ['name', 'authors', 'subject__name',
-                     'grade', 'isbn',]
+                     'grade', 'isbn', ]
 
     list_display = (
         'name',
@@ -84,7 +86,7 @@ class BookInstanceAdmin(admin.ModelAdmin):
             href = reverse(
                 "admin:readersRecords_reader_change", args=(reader.id,)
             )
-            return f'<a href="{href}" target="_blank" rel="noopener noreferrer">{reader}</a>'
+            return f'<a href="{href}">{reader}</a>'
         else:
             return "нет"
 
@@ -98,7 +100,7 @@ class BookInstanceAdmin(admin.ModelAdmin):
                     "admin:readersRecords_reader_change", args=(reader.id,)
                 )
                 taken_by[ind] = (
-                    f'<a href="{href}" target="_blank" rel="noopener noreferrer",>{reader}</a>'
+                    f'<a href="{href}">{reader}</a>'
                 )
 
             if len(taken_by) > 1:
