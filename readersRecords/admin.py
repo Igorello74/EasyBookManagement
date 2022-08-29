@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.contrib import admin
 from django.db import models
+from django.db.models import Count
 from django.http import FileResponse
 
 from .models import Reader
@@ -34,9 +35,15 @@ def export_to_file(modeladmin, request, queryset):
 
 @admin.register(Reader)
 class ReaderAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.annotate(Count("books"))
+
+        return qs
+
     @admin.display(description="Количество взятых книг")
     def get_books_num(self):
-        return self.books.all().count()
+        return self.books__count
 
     list_display = ("name", "role", "group", get_books_num)
     search_fields = ("name", 'group', 'id')
