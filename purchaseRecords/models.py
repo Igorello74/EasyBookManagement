@@ -46,7 +46,7 @@ class InventoryItem(models.Model):
         Invoice, models.CASCADE, verbose_name="накладная",
         related_name="items")
     num_bought = models.PositiveSmallIntegerField(
-        verbose_name="количество купленных экзепляров")
+        verbose_name="количество купленных экземпляров")
     price = models.DecimalField(
         max_digits=6, decimal_places=2, verbose_name="цена экземпляра, ₽")
     notes = models.TextField(

@@ -4,6 +4,7 @@ from django.db.models import Sum, Count, F
 
 from . import models
 from .widgets import DateInput
+from core import format_currency
 
 
 class InventoryItemInline(admin.TabularInline):
@@ -47,12 +48,14 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     @admin.display(description="Общая сумма, ₽", empty_value=0)
     def get_grand_total(self, obj):
-        return obj.grand_total
+        return format_currency(obj.grand_total)
 
-    list_display = ("custom_number", "date", "number",
+    list_display = ("custom_number", "date", "order_type", "number",
                     "get_items_num", "get_total_bought", 'get_grand_total')
     search_fields = ["custom_number", "number", "date"]
     inlines = [InventoryItemInline]
+    date_hierarchy = "date"
+    list_filter = ('order_type',)
 
     class Media:
         css = {"all": ("purchaseRecords/fix.css",)}
@@ -62,7 +65,8 @@ class InvoiceAdmin(admin.ModelAdmin):
 class InventoryItemAdmin(admin.ModelAdmin):
     @admin.display(description="Сумма, ₽", ordering="sum")
     def get_sum(self, obj):
-        return obj.sum
+        return format_currency(obj.sum)
+    
     list_display = ("inventory_number", "book", "num_bought",
                     "invoice", "price", "get_sum")
     autocomplete_fields = ["invoice", "book"]
