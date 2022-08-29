@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from django.db.models import Sum
+from django.db.models import Sum, Count, F
 
 from . import models
 from .widgets import DateInput
@@ -19,14 +19,18 @@ class InventoryItemInline(admin.TabularInline):
 
 @admin.register(models.Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    # def get_queryset(self, request):
-    #     qs = super().get_queryset(request)
-
-    #     return qs.annotate(purchase_num=Count('bookpurchase'))
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.annotate(
+            items_num=Count('items'),
+            total_bought=Sum("items__num_bought"),
+            grand_total=Sum(F("items__price") * F("items__num_bought"))
+        )
+        return qs
 
     # @admin.display(ordering="purchase_num",
     #                description="Количество наименований")
-    # def get_items(self, obj):
+    # def get_items_num(self, obj):
     #     return obj.purchase_num
 
     formfield_overrides = {
@@ -34,21 +38,19 @@ class InvoiceAdmin(admin.ModelAdmin):
     }
 
     @admin.display(description="Количество наименований")
-    def get_items(self, obj):
-        return obj.items.count()
+    def get_items_num(self, obj):
+        return obj.items_num
 
     @admin.display(description="Количество экземпляров", empty_value=0)
     def get_total_bought(self, obj):
-        return obj.items.aggregate(
-            Sum("num_bought"))["num_bought__sum"]
+        return obj.total_bought
 
     @admin.display(description="Общая сумма, ₽", empty_value=0)
     def get_grand_total(self, obj):
-        return obj.items.aggregate(
-            grand_total=Sum("sum"))["grand_total"]
+        return obj.grand_total
 
     list_display = ("custom_number", "date", "number",
-                    "get_items", "get_total_bought", 'get_grand_total')
+                    "get_items_num", "get_total_bought", 'get_grand_total')
     search_fields = ["custom_number", "number", "date"]
     inlines = [InventoryItemInline]
 
@@ -67,4 +69,3 @@ class InventoryItemAdmin(admin.ModelAdmin):
 
     class Media:
         css = {"all": ("purchaseRecords/fix.css",)}
-
