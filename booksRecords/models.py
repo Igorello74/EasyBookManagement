@@ -48,7 +48,10 @@ class Book(models.Model):
     )
 
     def __str__(self):
-        return f"{self.name} — {self.authors}"
+        result = f"{self.name} — {self.authors}"
+        if len(result) > 70:
+            result = result[:70] + '...'
+        return result
 
     class Meta:
         indexes = [
