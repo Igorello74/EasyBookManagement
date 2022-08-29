@@ -75,6 +75,11 @@ class BookAdmin(admin.ModelAdmin):
 
 @admin.register(models.BookInstance)
 class BookInstanceAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related().prefetch_related("taken_by")
+        return qs
+        
     @admin.display(description="взята")
     @mark_safe
     def get_taken_by(self, obj):
