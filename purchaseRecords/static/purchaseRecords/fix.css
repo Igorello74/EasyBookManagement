@@ -6,6 +6,7 @@
     padding-top: inherit !important;
 }
 
-.field-price, .field-get_sum {
+td.field-price *, td.field-get_sum *,
+td.field-price, td.field-get_sum, td.field-get_grand_total {
     text-align: right;
 }
