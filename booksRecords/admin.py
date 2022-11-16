@@ -122,7 +122,7 @@ class BookInstanceAdmin(admin.ModelAdmin):
         href = reverse("admin:booksRecords_book_change", args=(obj.book.id,))
         return (
             f'<a href="{href}" title="Редактировать книгу (не экземпляр)"'
-            f'target="_blank" rel="noopener noreferrer">{obj.book.name}</a>')
+            f'target="_blank" rel="noopener noreferrer" style="color:inherit">{obj.book.name}</a>')
 
     @admin.display(description="автор")
     def get_book_authors(self, obj):
