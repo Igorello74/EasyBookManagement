@@ -142,3 +142,10 @@ class BookInstanceAdmin(admin.ModelAdmin):
 @admin.register(models.Subject)
 class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['name']
+    
+    def get_model_perms(self, request):
+        """
+        Return empty perms dict thus hiding the model from admin index.
+        """
+        return {}
+

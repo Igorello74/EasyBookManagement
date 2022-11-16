@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.db import models
 from django.db.models import Count
 from django.http import FileResponse
+from django.contrib.auth.models import User, Group
 
 from .models import Reader
 from .widgets import ChoicesjsTextWidget
@@ -65,3 +66,6 @@ class ReaderAdmin(admin.ModelAdmin):
     class Media:
         js = ('js/reader.js',)
         css = {'all': ('css/reader.css',)}
+
+admin.site.unregister(User)
+admin.site.unregister(Group)
