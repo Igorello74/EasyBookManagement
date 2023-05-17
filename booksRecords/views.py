@@ -13,17 +13,22 @@ def get_bookInstance_info(request, ids: str):
     resp = {}
 
     for i in objs.values():
-        taken_by = list(i.taken_by.values_list('id', flat=True))
+        taken_by = list(i.taken_by.values('id', 'name', 'group'))
         if not taken_by:
             taken_by = None
+        elif not i.represents_multiple:
+            for taker in taken_by:
+                taker['admin_url'] = reverse("admin:readersRecords_reader_change", args=(taker['id'],))
 
         resp[i.barcode] = {
             'id': i.barcode,
             'name': i.book.name,
+            'book_id': i.book.id,
             'authors': i.book.authors,
             'status': BookInstance.get_status_code(i.status),
             'admin_url': reverse("admin:booksRecords_bookinstance_change", args=(i.barcode,)),
-            'taken_by': taken_by
+            'taken_by': taken_by,
+            'represents_multiple': i.represents_multiple
         }
 
     if len(resp) < len(ids):
