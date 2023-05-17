@@ -1,9 +1,13 @@
 
 from django.contrib.admin import site as admin_site
 from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils.decorators import method_decorator
+from django.views import View
 from django.views.decorators.http import require_http_methods
 
+from booksRecords.models import BookInstance
 from core.bulk_operations import BadFileError, ColumnNotFoundError
 
 from .forms import ImportForm
@@ -54,3 +58,30 @@ def import_xlsx(request):
 
     elif request.method == "GET":
         return render_import_xlsx(request)
+
+
+@method_decorator(staff_member_required, name="dispatch")
+class ReaderBooksView(View):
+    def get(self, *args, **kwargs):
+        reader = get_object_or_404(Reader, pk=kwargs['reader_id'])
+        books_instances = {i['barcode']: i for i in reader.books.values()}
+        return JsonResponse(books_instances, json_dumps_params={'ensure_ascii': False})
+
+    def put(self, *args, **kwargs):
+        try:
+            reader = get_object_or_404(Reader, pk=kwargs['reader_id'])
+            book_instance = get_object_or_404(
+                BookInstance, pk=kwargs["book_instance_id"])
+        except KeyError:
+            return HttpResponseBadRequest()
+        if not reader.books.contains(book_instance):
+            reader.books.add(book_instance)
+            return HttpResponse("created.", status=201)
+        return HttpResponse("Already exists.", status=409)
+
+    def delete(self, *args, **kwargs):
+        reader = get_object_or_404(Reader, pk=kwargs['reader_id'])
+        book_instance = get_object_or_404(
+            BookInstance, pk=kwargs["book_instance_id"])
+        reader.books.remove(book_instance)
+        return HttpResponse("deleted.")
