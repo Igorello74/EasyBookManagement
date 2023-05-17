@@ -74,12 +74,42 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
                         title: "Узнать  подробности"
                     })
                 }
-                messageELement.children("a").attr({
-                    href: data.admin_url,
-                    target: "_blank",
-                    rel: "noopener noreferrer",
-                    title: `${data.authors}: ${data.name}`
-                });
+                if (!data.represents_multiple && data.taken_by && addition && !initialSet.has(id)) {
+                    messageELement
+                        .html(`<a class="log-list__book-name">#${id} ${data.name}</a> записана на:<br/>
+                         <a class="log-list__taker">${data.taken_by[0].name}</a> из ${data.taken_by[0].group}`)
+                        .attr({
+                            "class": "log-list__item log-list__item--warning",
+                        });
+
+                    messageELement.children(".log-list__taker").attr({
+                        href: data.taken_by[0].admin_url,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        title: "Узнать подробности"
+                    });
+
+                    messageELement.children(".log-list__book-name").attr({
+                        href: data.admin_url,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        title: data.name
+                    });
+
+                    choicesInstance.removeActiveItemsByValue(id);
+
+                    // Decrease counters
+                    calculateCounters(null, null, null, special_decrease = true);
+
+                }
+                else {
+                    messageELement.children("a").attr({
+                        href: data.admin_url,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        title: `${data.authors}: ${data.name}`
+                    });
+                }
                 if (addition) {
                     editItemLabel(
                         id,
@@ -170,7 +200,7 @@ $(() => {
         $(".choices__input").on("keydown", event => event.key != "Enter");
 
         let choicesValue = $(".choicesjs")[0].value;
-        let initialSet = new Set();
+        window.initialSet = new Set();
 
         if (choicesValue) {
             initialSet = new Set(choicesValue.split(','));

@@ -33,6 +33,13 @@
     text-decoration: line-through;
 }
 
+.log-list__book-name {
+    display: inline-block;
+    width: 100px;
+    overflow: clip;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
 /* -----BOOK COUNTER----- */
 .book-counter {
