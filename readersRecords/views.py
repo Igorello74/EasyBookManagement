@@ -60,6 +60,18 @@ def import_xlsx(request):
         return render_import_xlsx(request)
 
 
+class ReaderNotesView(View):
+    def get(self, *args, **kwargs):
+        reader = get_object_or_404(Reader, pk=kwargs['reader_id'])
+        return HttpResponse(reader.notes, content_type="text/plain; charset=utf-8")
+
+    def post(self, request, *args, **kwargs):
+        reader = get_object_or_404(Reader, pk=kwargs['reader_id'])
+        reader.notes += "\n" + request.body.decode()
+        reader.save()
+        return HttpResponse("Notes modified.")
+
+
 @method_decorator(staff_member_required, name="dispatch")
 class ReaderBooksView(View):
     def get(self, *args, **kwargs):
@@ -86,9 +98,8 @@ class ReaderBooksView(View):
                 BookInstance, pk=kwargs["book_instance_id"])
         except (KeyError, ValueError):
             return HttpResponseBadRequest()
-        
+
         if reader.books.contains(book_instance):
             reader.books.remove(book_instance)
             return HttpResponse("deleted.")
         return HttpResponseNotFound()
-            

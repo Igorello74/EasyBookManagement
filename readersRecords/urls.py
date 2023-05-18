@@ -6,5 +6,6 @@ app_name = "readersRecords"
 urlpatterns = [
     path('<reader_id>/books/<book_instance_id>/',
          views.ReaderBooksView.as_view()),
-    path('<reader_id>/books/', views.ReaderBooksView.as_view())
+    path('<reader_id>/books/', views.ReaderBooksView.as_view()),
+    path('<reader_id>/notes/', views.ReaderNotesView.as_view())
 ]
