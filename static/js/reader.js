@@ -27,6 +27,18 @@ function getCookie(name) {
     return matches ? decodeURIComponent(matches[1]) : undefined;
 }
 
+function playClickSound(onended) {
+    const a = new Audio("/static/audio/click.mp3");
+    a.onended = onended;
+    return a.play();
+}
+
+function playErrorSound(onended) {
+    const a = new Audio("/static/audio/error.mp3");
+    a.onended = onended;
+    return a.play();
+}
+
 function createMessage(messageList, messageClass, messageContent) {
     let message = $(`<li></li>`).html(messageContent).addClass(messageClass).appendTo(messageList);
     window['nav-sidebar'].scrollTop = 1000000000;
@@ -59,7 +71,7 @@ function removeBookFromReader(bookInstanceId, readerId) {
     return $.ajax({
         url: `/readers/${readerId}/books/${bookInstanceId}/`,
         type: 'DELETE',
-        beforeSend: function(xhr) {
+        beforeSend: function (xhr) {
             xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
         },
     });
@@ -68,7 +80,7 @@ function removeBookFromReader(bookInstanceId, readerId) {
 function addBookToReader(bookInstanceId, readerId) {
     return $.ajax({
         url: `/readers/${readerId}/books/${bookInstanceId}/`,
-        beforeSend: function(xhr) {
+        beforeSend: function (xhr) {
             xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
         },
         type: 'PUT',
@@ -138,9 +150,11 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
 
                     // Decrease counters
                     calculateCounters(null, null, null, special_decrease = true);
+                    playErrorSound();
 
                 }
                 else {
+                    playClickSound();
                     messageELement.children("a").attr({
                         href: data.admin_url,
                         target: "_blank",
@@ -174,6 +188,7 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
 
                 // Decrease counters
                 calculateCounters(null, null, null, special_decrease = true);
+                playErrorSound();
             }
         },
     );
