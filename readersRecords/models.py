@@ -36,7 +36,6 @@ class Reader(models.Model):
         help_text="например, Иванов Иван"
     )
     notes = models.TextField(
-        max_length=500,
         blank=True,
         verbose_name="заметки"
     )
