@@ -19,6 +19,14 @@ function isTwiceOrMore(array, item) {
     return false;
 }
 
+
+function getCookie(name) {
+    let matches = document.cookie.match(new RegExp(
+        "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+    ));
+    return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
 function createMessage(messageList, messageClass, messageContent) {
     let message = $(`<li></li>`).html(messageContent).addClass(messageClass).appendTo(messageList);
     window['nav-sidebar'].scrollTop = 1000000000;
@@ -47,9 +55,39 @@ function getBookInstanceInfo(id, done, fail) {
         .fail(fail);
 }
 
+function removeBookFromReader(bookInstanceId, readerId) {
+    return $.ajax({
+        url: `/readers/${readerId}/books/${bookInstanceId}/`,
+        type: 'DELETE',
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+        },
+    });
+}
+
+function addBookToReader(bookInstanceId, readerId) {
+    return $.ajax({
+        url: `/readers/${readerId}/books/${bookInstanceId}/`,
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+        },
+        type: 'PUT',
+    });
+}
 function getBookInstanceRepresentation(data) {
     let title = `#${data.id} · ${data.name} — ${data.authors}`
     return `<span  title="${title}">#${data.id} · ${data.name} — <span class="choices__item-authors">${data.authors}</span></span>`
+}
+
+function swapBooks(reader1, book1, reader2, book2) {
+    return $.when(
+        removeBookFromReader(book1, reader1),
+        removeBookFromReader(book2, reader2)
+    ).done(function () {
+        addBookToReader(book1, reader2);
+        addBookToReader(book2, reader1);
+    });
+
 }
 
 function updateMessageInfo(id, messageELement, choicesInstance, addition = false) {
@@ -57,7 +95,7 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
         id,
         (data) => {
             data = data[id]
-            if (!data.error) {
+            if (data && !data.error) {
                 if (data.status != "active" && addition) {
                     messageELement
                         .html(`Некорректный статус книги <a>#${id}</a>`)
@@ -77,7 +115,7 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
                 if (!data.represents_multiple && data.taken_by && addition && !initialSet.has(id)) {
                     messageELement
                         .html(`<a class="log-list__book-name">#${id} ${data.name}</a> записана на:<br/>
-                         <a class="log-list__taker">${data.taken_by[0].name}</a> из ${data.taken_by[0].group}`)
+                        <a class="log-list__taker">${data.taken_by[0].name}</a> из ${data.taken_by[0].group}`)
                         .attr({
                             "class": "log-list__item log-list__item--warning",
                         });
