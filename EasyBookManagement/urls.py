@@ -26,4 +26,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('books/', include(booksRecords.urls)),
     path('readers/', include(readersRecords.urls)),
+    path('collisions/', readersRecords.views.CollisionLogWriterView.as_view())
 ]

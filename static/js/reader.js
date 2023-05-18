@@ -145,9 +145,10 @@ function swapBooks(currentBookInstance, bookTaker) {
         createMessage(
             messageList,
             'log-list__item log-list__item--delete',
-            `Книга <a class="log-list__book-id" href="#">#${otherBookInstanceId}</a> была удалена, `+
+            `Книга <a class="log-list__book-id" href="#">#${otherBookInstanceId}</a> была удалена, ` +
             `потому что предполагается, что она находится у ${bookTaker.name} из ${bookTaker.group}.`
-        ).attr("id", `message-${id}`);
+        ).attr("id", `message-${otherBookInstanceId}`);
+
     }
     else {
         removeBookFromReader(currentBookInstance.id, bookTaker.id
@@ -157,11 +158,16 @@ function swapBooks(currentBookInstance, bookTaker) {
                 `\nПо этой причине у текущего читателя (${bookTaker.name}) была удалена книга #${currentBookInstance.id}.\n`);
         });
 
-
     }
 
-
-
+    $.post("/collisions/", {
+        "csrfmiddlewaretoken": getCookie("csrftoken"),
+        'reader1': `${bookTaker.name} (${bookTaker.group})`,
+        'book1': currentBookInstance.id,
+        'reader2': `${bookBringer.name} (${bookBringer.group})`,
+        'book2': otherBookInstanceId,
+        'bookname': currentBookInstance.name
+    })
 }
 
 function updateMessageInfo(id, messageELement, choicesInstance, addition = false) {

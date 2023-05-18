@@ -1,4 +1,8 @@
 
+import csv
+from datetime import datetime
+from pathlib import Path
+
 from django.contrib.admin import site as admin_site
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
@@ -12,6 +16,9 @@ from core.bulk_operations import BadFileError, ColumnNotFoundError
 
 from .forms import ImportForm
 from .models import Reader
+
+
+dir_path = Path(__file__).resolve().parent
 
 
 def render_import_xlsx(request, err_obj: Exception = None,
@@ -103,3 +110,26 @@ class ReaderBooksView(View):
             reader.books.remove(book_instance)
             return HttpResponse("deleted.")
         return HttpResponseNotFound()
+
+
+class CollisionLogWriterView(View):
+    def post(self, request, *args, **kwargs):
+        file_path = dir_path/".."/"collisions_log.csv"
+        existed_before = file_path.exists()
+
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data = request.POST
+
+        with open(str(file_path), 'a', newline="") as f:
+            field_names = ["дата", "человек1 (потерявший)", "книга1",
+                           "человек2 (принёсший)", "книга2", "наименование книги"]
+            writer = csv.writer(f, dialect="excel-tab")
+            if not existed_before:
+                writer.writerow(field_names)
+            writer.writerow([
+                now,
+                data['reader1'], data['book1'],
+                data['reader2'], data['book2'], data['bookname']
+            ])
+
+        return HttpResponse()
