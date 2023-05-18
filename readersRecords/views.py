@@ -1,7 +1,7 @@
 
 from django.contrib.admin import site as admin_site
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -80,8 +80,15 @@ class ReaderBooksView(View):
         return HttpResponse("Already exists.", status=409)
 
     def delete(self, *args, **kwargs):
-        reader = get_object_or_404(Reader, pk=kwargs['reader_id'])
-        book_instance = get_object_or_404(
-            BookInstance, pk=kwargs["book_instance_id"])
-        reader.books.remove(book_instance)
-        return HttpResponse("deleted.")
+        try:
+            reader = get_object_or_404(Reader, pk=kwargs['reader_id'])
+            book_instance = get_object_or_404(
+                BookInstance, pk=kwargs["book_instance_id"])
+        except (KeyError, ValueError):
+            return HttpResponseBadRequest()
+        
+        if reader.books.contains(book_instance):
+            reader.books.remove(book_instance)
+            return HttpResponse("deleted.")
+        return HttpResponseNotFound()
+            
