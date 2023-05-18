@@ -254,7 +254,7 @@ $(() => {
 
         // Add event listener responsible for handling both adding and deletion
         choicesElement.on('change', (event) => {
-            let item = event.detail.value;
+            let item = event.detail.value.trim();
             if (choices.getValue(true).indexOf(item) == -1) {
                 createRemovalMessage(item, messageList, choices);
                 calculateCounters(false, item, initialSet);
