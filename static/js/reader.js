@@ -67,6 +67,14 @@ function getBookInstanceInfo(id, done, fail) {
         .fail(fail);
 }
 
+function findBookInstanceAlike(bookId, booksData) {
+    for (let key in booksData) {
+        if (booksData[key].book_id == bookId) {
+            return key
+        }
+    }
+}
+
 function removeBookFromReader(bookInstanceId, readerId) {
     return $.ajax({
         url: `/readers/${readerId}/books/${bookInstanceId}/`,
@@ -86,19 +94,73 @@ function addBookToReader(bookInstanceId, readerId) {
         type: 'PUT',
     });
 }
+
+function addNotesToReader(readerId, notes) {
+    return $.ajax({
+        url: `/readers/${readerId}/notes/`,
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+        },
+        type: 'POST',
+        contentType: 'text/plain',
+        data: String(notes)
+    });
+}
+
 function getBookInstanceRepresentation(data) {
     let title = `#${data.id} · ${data.name} — ${data.authors}`
     return `<span  title="${title}">#${data.id} · ${data.name} — <span class="choices__item-authors">${data.authors}</span></span>`
 }
 
-function swapBooks(reader1, book1, reader2, book2) {
-    return $.when(
-        removeBookFromReader(book1, reader1),
-        removeBookFromReader(book2, reader2)
-    ).done(function () {
-        addBookToReader(book1, reader2);
-        addBookToReader(book2, reader1);
-    });
+function swapBooks(currentBookInstance, bookTaker) {
+    if (!confirm(`Удалить эту книгу у ${bookTaker.name} и добавить ему "${currentBookInstance.name}" этого читателя?`)) {
+        return;
+    }
+
+    today = new Date().toLocaleString("ru-ru");
+    const otherBookInstanceId = findBookInstanceAlike(currentBookInstance.book_id, window.initialBooksData);
+    const bookBringer = Object.values(window.initialBooksData)[0].taken_by[0]
+
+    if (otherBookInstanceId) {
+        removeBookFromReader(currentBookInstance.id, bookTaker.id
+        ).done(function () {
+            return removeBookFromReader(otherBookInstanceId, bookBringer.id);
+        }).done(function () {
+            return addBookToReader(otherBookInstanceId, bookTaker.id);
+        }).done(function () {
+            return addNotesToReader(bookTaker.id, `\n{TKR} Когда проводилась выдача учебников, ${bookTaker.name} получил книгу #${currentBookInstance.id} (${currentBookInstance.name}),` +
+                ` однако [${today}] эту книгу принёс ${bookBringer.name} из ${bookBringer.group}.` +
+                `\nПо этой причине у текущего читателя (${bookTaker.name}) была удалена книга #${currentBookInstance.id} и добавлена #${otherBookInstanceId} взамен.\n`);
+        });
+
+        let $notes = $("#id_notes");
+        let new_notes = $notes.val() + `\n\n{BRN} Когда проводилась выдача учебников, ${bookBringer.name} получил книгу #${otherBookInstanceId} (${currentBookInstance.name}),` +
+            ` однако [${today}] он принес другую книгу (#${currentBookInstance.id}), которую получал ${bookTaker.name} из ${bookTaker.group}` +
+            `\nПо этой причине у текущего читателя (${bookBringer.name}) была удалена книга #${otherBookInstanceId}, которая предположительно находится у ${bookTaker.name}.\n`
+        $notes.val(new_notes);
+
+        window.choicesInstance.removeActiveItemsByValue(otherBookInstanceId);
+        calculateCounters(false, otherBookInstanceId, window.initialSet);
+
+        createMessage(
+            messageList,
+            'log-list__item log-list__item--delete',
+            `Книга <a class="log-list__book-id" href="#">#${otherBookInstanceId}</a> была удалена, `+
+            `потому что предполагается, что она находится у ${bookTaker.name} из ${bookTaker.group}.`
+        ).attr("id", `message-${id}`);
+    }
+    else {
+        removeBookFromReader(currentBookInstance.id, bookTaker.id
+        ).done(function () {
+            addNotesToReader(bookTaker.id, `\n{TKR} Когда проводилась выдача учебников, ${bookTaker.name} получил книгу #${currentBookInstance.id} (${currentBookInstance.name}),` +
+                ` однако [${today}] эту книгу принёс ${bookBringer.name} из ${bookBringer.group}.` +
+                `\nПо этой причине у текущего читателя (${bookTaker.name}) была удалена книга #${currentBookInstance.id}.\n`);
+        });
+
+
+    }
+
+
 
 }
 
@@ -125,9 +187,11 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
                     })
                 }
                 if (!data.represents_multiple && data.taken_by && addition && !initialSet.has(id)) {
+                    const taker = data.taken_by[0];
+
                     messageELement
                         .html(`<a class="log-list__book-name">#${id} ${data.name}</a> записана на:<br/>
-                        <a class="log-list__taker">${data.taken_by[0].name}</a> из ${data.taken_by[0].group}`)
+                        <a class="log-list__taker">${taker.name}</a> из ${taker.group}`)
                         .attr({
                             "class": "log-list__item log-list__item--warning",
                         });
@@ -151,6 +215,7 @@ function updateMessageInfo(id, messageELement, choicesInstance, addition = false
                     // Decrease counters
                     calculateCounters(null, null, null, special_decrease = true);
                     playErrorSound();
+                    setTimeout(() => swapBooks(data, taker), 500)
 
                 }
                 else {
@@ -244,9 +309,10 @@ $(() => {
 
     // I need to use defer function, because this very script happens to be
     // defined before choices-js-widget.js, therefore it can't access
-    // choices-js-widget's thinhs until the remote script is executed.
+    // choices-js-widget's things until the remote script is executed.
     defer(() => typeof (choicesElement[0].choices) != "undefined", () => {
         var choices = choicesElement[0].choices;
+        window.choicesInstance = choices;
 
         // Prevent form submitting on hitting Enter on empty Choices' input
         // (it might happen when one rapidly scans codes)
@@ -294,6 +360,7 @@ $(() => {
             editAllLabels(function () {
                 this.label = getBookInstanceRepresentation(data[this.value])
             }, choices);
+            window.initialBooksData = data;
         });
 
         // I can't call the function immediately, since it takes some time to fetch data
@@ -303,6 +370,7 @@ $(() => {
 
         // Create message-list in DOM
         let messageList = $("<ul></ul>").addClass("log-list");
+        window.messageList = messageList;
         $("nav#nav-sidebar").append(messageList);
 
         // Add event listener responsible for handling both adding and deletion
