@@ -360,6 +360,7 @@ $(() => {
 
         // Add autocaps functionality to "profile" field
         id_profile.oninput = function () { this.value = this.value.toUpperCase() }
+        $(".choices__input--cloned").on("input", function () { this.value = this.value.toUpperCase().replace("У", "E") })
 
         // Edit pre-passed items' labels
         getBookInstanceInfo($(".choicesjs")[0].value, data => {
