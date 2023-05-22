@@ -94,9 +94,10 @@ class BulkManager(models.Manager):
         """
 
         file_reader = dict_readers.factory.get(file)
-        pk_field = self.model._meta.pk.name
+        pk_field_name = self.model._meta.pk.name  # primary key field name
 
-        id_col = headers_mapping.get(pk_field, pk_field)
+        pk_col_name = headers_mapping.get(pk_field_name, pk_field_name)
+        # the name of the pk column in the file
 
         # Iterate through rows and save models
         objs_to_create = []  # rows with no id provided are appended to it
@@ -104,11 +105,11 @@ class BulkManager(models.Manager):
 
         for row in file_reader:
             obj = self.model()
-            id = row.get(pk_field)
-            if id != "" and id is not None:
+            id = row.get(pk_col_name)
+            if id:
                 # if id is present, it's an update operation
                 objs_to_update.append(obj)
-                obj.id = row[id_col]
+                obj.id = id
             else:
                 objs_to_create.append(obj)
 
@@ -133,7 +134,7 @@ class BulkManager(models.Manager):
         if objs_to_update:
             fields = [
                 k for k, v in headers_mapping.items()
-                if v in file_reader.fieldnames and k != pk_field]
+                if v in file_reader.fieldnames and k != pk_field_name]
 
             updated = self.model.objects.bulk_update(
                 objs_to_update, fields)
