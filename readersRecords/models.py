@@ -2,14 +2,6 @@ from django.db import models
 
 from core import BulkManager
 
-LANGUAGES = (
-    ('en', 'Английский'),
-    ('de', 'Немецкий'),
-    ('fr', 'Французкий'),
-    ('zh', 'Китайский'),
-    ('it', 'Итальянский'),
-)
-
 
 class Reader(models.Model):
     '''
@@ -57,15 +49,13 @@ class Reader(models.Model):
     )
 
     first_lang = models.CharField(
-        max_length=2,
-        choices=LANGUAGES,
+        max_length=20,
         verbose_name='Первый язык',
         blank=True,
     )
 
     second_lang = models.CharField(
-        max_length=2,
-        choices=LANGUAGES,
+        max_length=20,
         verbose_name='Второй язык',
         blank=True,
     )
