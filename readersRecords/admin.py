@@ -8,30 +8,12 @@ from django.contrib.auth.models import User, Group
 
 from .models import Reader
 from .widgets import ChoicesjsTextWidget
+from .views import export_xlsx
 
 
 @admin.action(description='Экспортировать выбранных читателей')
 def export_to_file(modeladmin, request, queryset):
-    file_path = queryset.export_to_file(
-        ".xlsx",
-        {'id': 'id',
-         'name': 'имя',
-         'group': 'класс',
-         'profile': 'профиль',
-         'first_lang': 'язык 1',
-         'second_lang': 'язык 2',
-         'role': "роль",
-         'books': "книги"
-         },
-        ['books'],
-    )
-
-    return FileResponse(
-        open(file_path, "rb"),
-        filename=datetime.now().strftime("Экспорт читателей %d-%m-%Y.xlsx"),
-        as_attachment=True,
-        headers={"Content-Type": "application/vnd.openxmlformats"
-                 "-officedocument.spreadsheetml.sheet"})
+    return export_xlsx(request, queryset)
 
 
 @admin.register(Reader)

@@ -1,6 +1,8 @@
 
+from datetime import datetime
 from django.contrib.admin import site as admin_site
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import FileResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
@@ -54,3 +56,27 @@ def import_xlsx(request):
 
     elif request.method == "GET":
         return render_import_xlsx(request)
+
+def export_xlsx(request, queryset=None):
+    if queryset is None:
+        queryset = Reader.objects.all()
+    file_path = queryset.export_to_file(
+        ".xlsx",
+        {'id': 'id',
+         'name': 'имя',
+         'group': 'класс',
+         'profile': 'профиль',
+         'first_lang': 'язык 1',
+         'second_lang': 'язык 2',
+         'role': "роль",
+         'books': "книги"
+         },
+        ['books'],
+    )
+
+    return FileResponse(
+        open(file_path, "rb"),
+        filename=datetime.now().strftime("Экспорт читателей %d-%m-%Y.xlsx"),
+        as_attachment=True,
+        headers={"Content-Type": "application/vnd.openxmlformats"
+                 "-officedocument.spreadsheetml.sheet"})
