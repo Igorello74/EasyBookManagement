@@ -16,7 +16,7 @@
         font-size: 1em;
     }
 
-    .like-p {
+    .paragraph {
         margin: .2em 0 .8em 0;
     }
 </style>
@@ -50,13 +50,13 @@
 {% endif %}
 
 <div>
-    <p>
+    <div class="paragraph">
         Здесь вы можете импортировать читателей из файла Excel (расширение <i>.xlsx</i> или <i>.csv</i>).
         Файл должен соответствовать <a href="{% static 'etc/шаблон импорта читателей.xlsx' %}"
             style="text-decoration: underline;">шаблону</a>.
         <br /> Все стоблцы, кроме столбца “имя”, можно не указывать, более того, можно удалить ненужные столбцы.
-    </p>
-    <div class="like-p">
+    </div class="paragraph">
+    <div class="paragraph">
         Возможные заголовки столбцов в таблице:
         <ul class="big-list">
             <li><b>Имя</b>: фамилия и имя читателя. Например: <i>Иванов Иван</i>.</li>
@@ -69,7 +69,7 @@
             </li>
         </ul>
     </div>
-    <div class="like-p">
+    <div class="paragraph">
         Кроме того, вместо импорта новых читателей, вы можете изменить существующих, для этого вам нужно экспортировать
         нужных вам читателей с этой <a href="{% url 'admin:readersRecords_reader_changelist' %}">страницы</a>:
         <ol class="big-list">
