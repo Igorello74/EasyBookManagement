@@ -2,6 +2,7 @@
 such as import/export from/to json, csv, xlsx etc.
 """
 from tempfile import NamedTemporaryFile
+from typing import Callable
 
 from django.db import models
 
@@ -19,24 +20,36 @@ class ColumnNotFoundError(LookupError):
 
 
 class BulkQuerySet(models.QuerySet):
-    def export_to_file(self, format: str, headers_mapping: dict,
-                       related_fields=[]) -> str:
+    def export_to_file(
+            self,
+            format: str,
+            headers_mapping: dict,
+            related_fields=set(),
+            related_handler: Callable[[models.QuerySet], str] = None) -> str:
         """Export objects to a file (.csv, .xlsx, etc.)
 
+        format: ".csv", ".xlsx" - check core.dict_writers module;
         headers_mapping: a mapping of model fields
          to column headers (custom column names);
-        format: ".csv", ".xlsx" - check core.dict_writers module
+        related_fields: specify related fields (like m2m or the opposite side of f/k);
+        related_handler: a function to format the related fields with.
+         It is given a queryset of the related objects and expected to return str.
 
         Returns "/path/to/tempfile"
 
-        Note: filename is meaningless (like "qe1rfF2csg1244"), so you'll
-        have to overwrite it in response
+        Note: the filename is meaningless (like "qe1rfF2csg1244"), so you'll
+        have to overwrite it in the response
         """
+        if related_fields and related_handler is None:
+            raise RuntimeError(
+                "You must provide a related_handler if you set related_fields")
+
         with NamedTemporaryFile('w', delete=False) as buffer:
             file_writer = dict_writers.factory.get(
                 format,
                 f=buffer,
-                fieldnames=headers_mapping.values()
+                fieldnames=headers_mapping.values(),
+                wrap_multiline_cells=True
             )
             if related_fields:
                 self = self.prefetch_related(*related_fields)
@@ -45,10 +58,9 @@ class BulkQuerySet(models.QuerySet):
             for obj in self:
                 row = {}
                 for field, header in headers_mapping.items():
-                    val = getattr(obj, field)
+                    row[header] = getattr(obj, field)
                     if field in related_fields:
-                        val = ' '.join(i.pk for i in val.all())
-                    row[header] = val
+                        row[header] = related_handler(row[header].all())
 
                 file_writer.writerow(row)
 

@@ -6,6 +6,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import FileResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.text import Truncator
 from django.views import View
 
 from core.bulk_operations import BadFileError, ColumnNotFoundError
@@ -17,7 +18,7 @@ from .models import Reader
 @method_decorator(staff_member_required, name="dispatch")
 class ImportView(View):
     def _render(self, request, err_obj: Exception = None,
-                            created: int = 0, updated: int = 0):
+                created: int = 0, updated: int = 0):
         context = {'form': ImportForm, 'title': "Импортировать читателей",
                    'is_nav_sidebar_enabled': True,
                    'available_apps': admin_site.get_app_list(request)
@@ -62,21 +63,32 @@ import_xlsx = ImportView.as_view()
 
 
 class ExportView(View):
+    @staticmethod
+    def format_related(qs) -> str:
+        result = []
+        for count, i in enumerate(qs.select_related("book"), 1):
+            author = Truncator(i.book.authors).words(1)
+            result.append(
+                f"{count}. {i.book.name} ({author}) — [{i.barcode}]"
+            )
+
+        return "\n".join(result)
+
     def get(self, request, queryset=None):
         if queryset is None:
             queryset = Reader.objects.all()
         file_path = queryset.export_to_file(
             ".xlsx",
             {'id': 'id',
-            'name': 'имя',
-            'group': 'класс',
-            'profile': 'профиль',
-            'first_lang': 'язык 1',
-            'second_lang': 'язык 2',
-            'role': "роль",
-            'books': "книги"
-            },
-            ['books'],
+             'name': 'Имя',
+             'group': 'Класс',
+             'profile': 'Профиль',
+             'first_lang': 'Язык 1',
+             'second_lang': 'Язык 2',
+             'books': "Книги"
+             },
+            {'books'},
+            self.format_related
         )
 
         return FileResponse(
@@ -84,9 +96,10 @@ class ExportView(View):
             filename=datetime.now().strftime("Экспорт читателей %d-%m-%Y.xlsx"),
             as_attachment=True,
             headers={"Content-Type": "application/vnd.openxmlformats"
-                    "-officedocument.spreadsheetml.sheet"})
-    
+                     "-officedocument.spreadsheetml.sheet"})
+
     def post(self, *args, **kwargs):
         return self.get(*args, **kwargs)
+
 
 export_xlsx = ExportView.as_view()
