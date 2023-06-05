@@ -1,8 +1,13 @@
 
+from datetime import datetime
+
 from django.contrib.admin import site as admin_site
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import FileResponse
 from django.shortcuts import render
-from django.views.decorators.http import require_http_methods
+from django.utils.decorators import method_decorator
+from django.utils.text import Truncator
+from django.views import View
 
 from core.bulk_operations import BadFileError, ColumnNotFoundError
 
@@ -10,29 +15,27 @@ from .forms import ImportForm
 from .models import Reader
 
 
-def render_import_xlsx(request, err_obj: Exception = None,
-                       created: int = 0, updated: int = 0):
-    context = {'form': ImportForm, 'title': "Импортировать читателей",
-               'is_nav_sidebar_enabled': True,
-               'available_apps': admin_site.get_app_list(request)
-               }
+@method_decorator(staff_member_required, name="dispatch")
+class ImportView(View):
+    def _render(self, request, err_obj: Exception = None,
+                created: int = 0, updated: int = 0):
+        context = {'form': ImportForm, 'title': "Импортировать читателей",
+                   'is_nav_sidebar_enabled': True,
+                   'available_apps': admin_site.get_app_list(request)
+                   }
 
-    if err_obj:
-        if isinstance(err_obj, ColumnNotFoundError):
-            context['missing_columns'] = err_obj.missing_columns
-        elif isinstance(err_obj, BadFileError):
-            context['bad_format'] = True
+        if err_obj:
+            if isinstance(err_obj, ColumnNotFoundError):
+                context['missing_columns'] = err_obj.missing_columns
+            elif isinstance(err_obj, BadFileError):
+                context['bad_format'] = True
 
-    context['created'] = created
-    context['updated'] = updated
+        context['created'] = created
+        context['updated'] = updated
 
-    return render(request, "readersRecords/import-form.html", context)
+        return render(request, "readersRecords/import-form.html", context)
 
-
-@staff_member_required
-@require_http_methods(["GET", "POST"])
-def import_xlsx(request):
-    if request.method == "POST":
+    def post(self, request):
         form = ImportForm(request.POST, request.FILES)
         if form.is_valid():
             try:
@@ -48,9 +51,55 @@ def import_xlsx(request):
                     ["name"])
 
             except (ColumnNotFoundError, BadFileError) as e:
-                return render_import_xlsx(request, err_obj=e)
+                return self._render(request, err_obj=e)
             else:
-                return render_import_xlsx(request, **result)
+                return self._render(request, **result)
 
-    elif request.method == "GET":
-        return render_import_xlsx(request)
+    def get(self, request):
+        return self._render(request)
+
+
+import_xlsx = ImportView.as_view()
+
+
+class ExportView(View):
+    @staticmethod
+    def format_related(qs) -> str:
+        result = []
+        for count, i in enumerate(qs.select_related("book"), 1):
+            author = Truncator(i.book.authors).words(1)
+            result.append(
+                f"{count}. {i.book.name} ({author}) — [{i.barcode}]"
+            )
+
+        return "\n".join(result)
+
+    def get(self, request, queryset=None):
+        if queryset is None:
+            queryset = Reader.objects.all()
+        file_path = queryset.export_to_file(
+            ".xlsx",
+            {'id': 'id',
+             'name': 'Имя',
+             'group': 'Класс',
+             'profile': 'Профиль',
+             'first_lang': 'Язык 1',
+             'second_lang': 'Язык 2',
+             'books': "Книги"
+             },
+            {'books'},
+            self.format_related
+        )
+
+        return FileResponse(
+            open(file_path, "rb"),
+            filename=datetime.now().strftime("Экспорт читателей %d-%m-%Y.xlsx"),
+            as_attachment=True,
+            headers={"Content-Type": "application/vnd.openxmlformats"
+                     "-officedocument.spreadsheetml.sheet"})
+
+    def post(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
+
+
+export_xlsx = ExportView.as_view()

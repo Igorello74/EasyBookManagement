@@ -101,9 +101,14 @@ div.choices {
 
 
 /* -----CHANGE LIST----- */
-#importlink {
-    background: var(--object-tools-bg) url("../img/table icon.png") no-repeat;
+#importlink,
+#exportlink {
     background-position: right 9px center;
+    background-repeat: no-repeat;
+    padding-right: 29px;
+    background-size: 16px;
+    /*
+    background: var(--object-tools-bg) url("../img/download.png") no-repeat;
 
     display: block;
     float: left;
@@ -112,5 +117,13 @@ div.choices {
     font-weight: 400;
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.5px; */
+}
+#importlink {
+    background-image: url("../img/upload.png");
+    background-color: #a11313;
+}
+#exportlink {
+    background-image: url("../img/download.png");
+    background-color: #438917;
 }
