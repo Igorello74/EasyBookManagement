@@ -9,7 +9,7 @@ import pathlib
 
 from openpyxl import load_workbook
 
-from core.factory import ObjectFactory
+from EasyBookManagement import ObjectFactory
 
 
 class BadFileError(Exception):

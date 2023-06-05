@@ -1,6 +1,6 @@
 from django.db import models
 
-from core import BulkManager
+from importExport import BulkManager
 
 
 class Reader(models.Model):

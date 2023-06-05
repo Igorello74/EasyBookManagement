@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.utils.text import Truncator
 from django.views import View
 
-from core.bulk_operations import BadFileError, ColumnNotFoundError
+from importExport import BadFileError, ColumnNotFoundError
 
 from .forms import ImportForm
 from .models import Reader

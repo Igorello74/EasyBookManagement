@@ -1,14 +1,14 @@
 """Implement some bulk operations on models,
 such as import/export from/to json, csv, xlsx etc.
 """
+
 from tempfile import NamedTemporaryFile
 from typing import Callable
 
 from django.db import models
 
-from core import dict_readers, dict_writers
-
-BadFileError = dict_readers.BadFileError
+from . import dict_readers, dict_writers
+from .dict_readers import BadFileError
 
 
 class ColumnNotFoundError(LookupError):

@@ -10,7 +10,7 @@ import openpyxl
 from openpyxl.worksheet.dimensions import ColumnDimension, DimensionHolder
 from openpyxl.utils import get_column_letter
 
-from core.factory import ObjectFactory
+from EasyBookManagement import ObjectFactory
 
 
 class DictWriterFactory(ObjectFactory):
