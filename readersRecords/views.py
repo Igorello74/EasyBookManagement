@@ -25,7 +25,7 @@ class ReaderImportView(ImportView):
         'role': "роль"
     }
     required_fields = ['name']
-    page_title = "Импортировать читателей"
+    page_title = "Загрузить базу читателей"
 
 
 import_xlsx = ReaderImportView.as_view()
