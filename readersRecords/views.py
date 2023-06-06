@@ -10,56 +10,29 @@ from django.utils.text import Truncator
 from django.views import View
 
 from importExport import BadFileError, ColumnNotFoundError
+from importExport.views import ImportView
 
 from .forms import ImportForm
 from .models import Reader
 
 
 @method_decorator(staff_member_required, name="dispatch")
-class ImportView(View):
-    def _render(self, request, err_obj: Exception = None,
-                created: int = 0, updated: int = 0):
-        context = {'form': ImportForm, 'title': "Импортировать читателей",
-                   'is_nav_sidebar_enabled': True,
-                   'available_apps': admin_site.get_app_list(request)
-                   }
-
-        if err_obj:
-            if isinstance(err_obj, ColumnNotFoundError):
-                context['missing_columns'] = err_obj.missing_columns
-            elif isinstance(err_obj, BadFileError):
-                context['bad_format'] = True
-
-        context['created'] = created
-        context['updated'] = updated
-
-        return render(request, "readersRecords/import-form.html", context)
-
-    def post(self, request):
-        form = ImportForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                result = Reader.objects.import_from_file(
-                    request.FILES['file'],
-                    {'name': 'имя',
-                     'group': 'класс',
-                     'profile': 'профиль',
-                     'first_lang': 'язык 1',
-                     'second_lang': 'язык 2',
-                     'role': "роль"
-                     },
-                    ["name"])
-
-            except (ColumnNotFoundError, BadFileError) as e:
-                return self._render(request, err_obj=e)
-            else:
-                return self._render(request, **result)
-
-    def get(self, request):
-        return self._render(request)
+class ImportReaderView(ImportView):
+    model = Reader
+    template_name = "readersRecords/import.html"
+    headers_mapping = {
+        'name': 'имя',
+        'group': 'класс',
+        'profile': 'профиль',
+        'first_lang': 'язык 1',
+        'second_lang': 'язык 2',
+        'role': "роль"
+    }
+    required_fields = ['name']
+    page_title = "Импортировать читателей"
 
 
-import_xlsx = ImportView.as_view()
+import_xlsx = ImportReaderView.as_view()
 
 
 class ExportView(View):

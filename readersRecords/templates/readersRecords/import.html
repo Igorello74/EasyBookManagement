@@ -1,4 +1,4 @@
-{% extends "admin/base_site.html" %}
+{% extends "importExport/import.html" %}
 {% load static %}
 
 {% block breadcrumbs %}
@@ -10,45 +10,8 @@
 </div>
 {% endblock %}
 
-{% block extrastyle %}
-<style>
-    .big-list li {
-        font-size: 1em;
-    }
 
-    .paragraph {
-        margin: .2em 0 .8em 0;
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-{% if created %}
-<ul class="messagelist">
-    <li class="success">Успешно добавлено {{ created }} читателей.</li>
-</ul>
-{% endif %}
-{% if updated %}
-<ul class="messagelist">
-    <li class="success">Успешно изменена информация {{ updated }} читателей.</li>
-</ul>
-{% endif %}
-
-{% if missing_columns %}
-<ul class="messagelist">
-    <li class="error">
-        Не удалось найти следующие колонки в файле:
-        {{ missing_columns|join:", " }}
-    </li>
-</ul>
-{% elif bad_format %}
-<ul class="messagelist">
-    <li class="error">
-        Некорректный формат файла. Допустимый формат: таблица Excel (<i>.xlsx</i>) или файл <i>csv</i>.
-    </li>
-</ul>
-{% endif %}
-
+{% block import-instructions %}
 <div>
     <div class="paragraph">
         Здесь вы можете импортировать читателей из файла Excel (расширение <i>.xlsx</i> или <i>.csv</i>).
@@ -82,11 +45,4 @@
         информацию в этом файле, а затем импортировать эти изменения здесь. <br/> Ни в коем случае не меняйте поле id!
     </div>
 </div>
-
-<hr style="margin: 10px 0 10px 0;" />
-<form action="" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Загрузить" />
-</form>
 {% endblock %}

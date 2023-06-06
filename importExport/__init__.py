@@ -133,9 +133,10 @@ class BulkManager(models.Manager):
                     setattr(obj, field, val)
 
             absent_columns = []
-            for i in required_fields:
-                if not getattr(obj, i):
-                    absent_columns.append(i)
+            for field in required_fields:
+                if not getattr(obj, field):
+                    absent_columns.append(headers_mapping[field])
+
             if absent_columns:
                 raise ColumnNotFoundError(absent_columns)
 
