@@ -1,5 +1,9 @@
+from datetime import datetime
+
 from django.contrib.admin import site as admin_site
 from django.core.exceptions import ImproperlyConfigured
+from django.http import FileResponse
+from django.views import View
 from django.views.generic.edit import FormView
 
 from importExport import BadFileError, ColumnNotFoundError
@@ -76,7 +80,7 @@ class ImportView(FormView):
     def get_context_data(self, **kwargs):
         if not self.page_title:
             self.page_title = f"Импортировать {self.model._meta.verbose_name.title()}"
-        
+
         kwargs.update({
             'form': ImportForm,
             'title': self.page_title,
@@ -84,3 +88,41 @@ class ImportView(FormView):
             'available_apps': admin_site.get_app_list(self.request)
         })
         return super().get_context_data(**kwargs)
+
+
+class ExportView(View):
+    model = None
+    headers_mapping = None
+    related_fields = set()
+    file_format = ".xlsx"
+
+    @staticmethod
+    def format_related(qs) -> str:
+        raise NotImplementedError(
+            "format_related method has to be implemented in the subclass"
+        )
+
+    def get_filename(self):
+        model_name = self.model._meta.verbose_name.title()
+        return (
+            f"Экспорт {model_name} {datetime.now():%d-%m-%Y}{self.file_format}"
+        )
+
+    def get(self, request, queryset=None):
+        if queryset is None:
+            queryset = self.model.objects.all()
+        file_path = queryset.export_to_file(
+            self.file_format,
+            self.headers_mapping,
+            self.related_fields,
+            self.format_related
+        )
+
+        return FileResponse(
+            open(file_path, "rb"),
+            filename=self.get_filename(),
+            as_attachment=True,
+        )
+
+    def post(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
