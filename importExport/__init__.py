@@ -142,15 +142,18 @@ class BulkManager(models.Manager):
 
         created = updated = 0
 
-        if objs_to_create:
-            created = len(self.model.objects.bulk_create(objs_to_create))
-        if objs_to_update:
-            fields = [
-                k for k, v in headers_mapping.items()
-                if v in file_reader.fieldnames and k != pk_field_name]
+        try:
+            if objs_to_create:
+                created = len(self.model.objects.bulk_create(objs_to_create))
+            if objs_to_update:
+                fields = [
+                    k for k, v in headers_mapping.items()
+                    if v in file_reader.fieldnames and k != pk_field_name]
 
-            updated = self.model.objects.bulk_update(
-                objs_to_update, fields)
+                updated = self.model.objects.bulk_update(
+                    objs_to_update, fields)
+        except ValueError:
+            raise BadFileError
 
         return {'created': created, 'updated': updated}
 
