@@ -1,14 +1,14 @@
 """Implement some bulk operations on models,
 such as import/export from/to json, csv, xlsx etc.
 """
+
 from tempfile import NamedTemporaryFile
 from typing import Callable
 
 from django.db import models
 
-from core import dict_readers, dict_writers
-
-BadFileError = dict_readers.BadFileError
+from . import dict_readers, dict_writers
+from .dict_readers import BadFileError
 
 
 class ColumnNotFoundError(LookupError):
@@ -133,23 +133,27 @@ class BulkManager(models.Manager):
                     setattr(obj, field, val)
 
             absent_columns = []
-            for i in required_fields:
-                if not getattr(obj, i):
-                    absent_columns.append(i)
+            for field in required_fields:
+                if not getattr(obj, field):
+                    absent_columns.append(headers_mapping[field])
+
             if absent_columns:
                 raise ColumnNotFoundError(absent_columns)
 
         created = updated = 0
 
-        if objs_to_create:
-            created = len(self.model.objects.bulk_create(objs_to_create))
-        if objs_to_update:
-            fields = [
-                k for k, v in headers_mapping.items()
-                if v in file_reader.fieldnames and k != pk_field_name]
+        try:
+            if objs_to_create:
+                created = len(self.model.objects.bulk_create(objs_to_create))
+            if objs_to_update:
+                fields = [
+                    k for k, v in headers_mapping.items()
+                    if v in file_reader.fieldnames and k != pk_field_name]
 
-            updated = self.model.objects.bulk_update(
-                objs_to_update, fields)
+                updated = self.model.objects.bulk_update(
+                    objs_to_update, fields)
+        except ValueError:
+            raise BadFileError
 
         return {'created': created, 'updated': updated}
 

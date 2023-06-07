@@ -1,4 +1,4 @@
-{% extends "admin/base_site.html" %}
+{% extends "importExport/import.html" %}
 {% load static %}
 
 {% block breadcrumbs %}
@@ -6,52 +6,15 @@
     <a href="{% url 'admin:index' %}">Начало</a>
     &rsaquo; <a href="{% url 'admin:app_list' app_label='readersRecords' %}">Формуляры читателей</a>
     &rsaquo; <a href="/admin/readersRecords/reader/">Читатели</a>
-    &rsaquo; Импортировать читателей
+    &rsaquo; {{title}}
 </div>
 {% endblock %}
 
-{% block extrastyle %}
-<style>
-    .big-list li {
-        font-size: 1em;
-    }
 
-    .paragraph {
-        margin: .2em 0 .8em 0;
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-{% if created %}
-<ul class="messagelist">
-    <li class="success">Успешно добавлено {{ created }} читателей.</li>
-</ul>
-{% endif %}
-{% if updated %}
-<ul class="messagelist">
-    <li class="success">Успешно изменена информация {{ updated }} читателей.</li>
-</ul>
-{% endif %}
-
-{% if missing_columns %}
-<ul class="messagelist">
-    <li class="error">
-        Не удалось найти следующие колонки в файле:
-        {{ missing_columns|join:", " }}
-    </li>
-</ul>
-{% elif bad_format %}
-<ul class="messagelist">
-    <li class="error">
-        Некорректный формат файла. Допустимый формат: таблица Excel (<i>.xlsx</i>) или файл <i>csv</i>.
-    </li>
-</ul>
-{% endif %}
-
+{% block import-instructions %}
 <div>
     <div class="paragraph">
-        Здесь вы можете импортировать читателей из файла Excel (расширение <i>.xlsx</i> или <i>.csv</i>).
+        Здесь вы можете загрузить базу читателей из файла Excel (расширение <i>.xlsx</i> или <i>.csv</i>).
         Файл должен соответствовать <a href="{% static 'etc/шаблон импорта читателей.xlsx' %}"
             style="text-decoration: underline;">шаблону</a>.
         <br /> Все стоблцы, кроме столбца “имя”, можно не указывать, более того, можно удалить ненужные столбцы.
@@ -64,29 +27,22 @@
                 указывать.</li>
             <li><b>Профиль</b>: профиль ученика, например: <i>БИО</i>, <i>ИТ</i>.</li>
             <li>
-                <b>Язык 1</b> и <b>язык 2</b>: первый и второй иностранные языки ученика в формате ISO 639-1.<br />
-                Коды языков: en – английский, de – немецкий, fr – французкий, zh – китайский, it – итальянский.
+                <b>Язык 1</b> и <b>язык 2</b>: первый и второй иностранные языки ученика (например, анг - английский,
+                фра = французкий)
             </li>
         </ul>
     </div>
     <div class="paragraph">
-        Кроме того, вместо импорта новых читателей, вы можете изменить существующих, для этого вам нужно экспортировать
+        Кроме того, вместо создания новых читателей, вы можете изменить существующих, для этого вам нужно скачать
         нужных вам читателей с этой <a href="{% url 'admin:readersRecords_reader_changelist' %}">страницы</a>:
         <ol class="big-list">
             <li>Примените нужные фильтры (справа). Например, фильтр по классу.</li>
             <li>Выделите читателей, информацию о которых вы хотите измненить, галочками в первом столбце. Также можно
                 выбрать всех читателей (учитывая фильтр).</li>
-            <li>Действие: экспортировать выбранных читателей<br /></li>
+            <li>Действие: экспортировать выбранных читателей.</li>
         </ol>
         Таким образом, вы скачаете Excel файл, в котором будут выбранные читатели. Теперь вы можете изменить нужную
-        информацию в этом файле, а затем импортировать эти изменения здесь. <br/> Ни в коем случае не меняйте поле id!
+        информацию в этом файле, а затем загрузить эти изменения здесь. <br/> Ни в коем случае не меняйте поле id!
     </div>
 </div>
-
-<hr style="margin: 10px 0 10px 0;" />
-<form action="" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Загрузить" />
-</form>
 {% endblock %}

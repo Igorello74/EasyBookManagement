@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+
+{% block extrastyle %}
+<style>
+    .big-list li {
+        font-size: 1em;
+    }
+
+    .paragraph {
+        margin: .2em 0 .8em 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% block message-list %}
+<ul class="messagelist">
+    {% if created %}
+        <li class="success">Успешно добавлено {{ created }} объектов.</li>
+    {% endif %}
+    {% if updated %}
+        <li class="success">Успешно изменена информация {{ updated }} объектов.</li>
+    {% endif %}
+
+    {% if missing_columns %}
+        <li class="error">Не удалось найти следующие колонки в файле: {{ missing_columns|join:", " }}
+        </li>
+    {% elif bad_format %}
+        <li class="error"> Некорректный формат файла. Допустимый формат: таблица Excel (<i>.xlsx</i>) или файл <i>.csv</i>.
+        </li>
+    {% endif %}
+</ul>
+{% endblock message-list %}
+
+{% block import-instructions %}
+{% endblock %}
+
+<hr style="margin: 10px 0 10px 0;" />
+<form action="" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Загрузить" />
+</form>
+{% endblock %}

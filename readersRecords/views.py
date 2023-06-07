@@ -1,68 +1,49 @@
 
 from datetime import datetime
 
-from django.contrib.admin import site as admin_site
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import FileResponse
-from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.text import Truncator
 from django.views import View
 
-from core.bulk_operations import BadFileError, ColumnNotFoundError
+from importExport.views import ExportView, ImportView
 
-from .forms import ImportForm
 from .models import Reader
 
 
 @method_decorator(staff_member_required, name="dispatch")
-class ImportView(View):
-    def _render(self, request, err_obj: Exception = None,
-                created: int = 0, updated: int = 0):
-        context = {'form': ImportForm, 'title': "Импортировать читателей",
-                   'is_nav_sidebar_enabled': True,
-                   'available_apps': admin_site.get_app_list(request)
-                   }
-
-        if err_obj:
-            if isinstance(err_obj, ColumnNotFoundError):
-                context['missing_columns'] = err_obj.missing_columns
-            elif isinstance(err_obj, BadFileError):
-                context['bad_format'] = True
-
-        context['created'] = created
-        context['updated'] = updated
-
-        return render(request, "readersRecords/import-form.html", context)
-
-    def post(self, request):
-        form = ImportForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                result = Reader.objects.import_from_file(
-                    request.FILES['file'],
-                    {'name': 'имя',
-                     'group': 'класс',
-                     'profile': 'профиль',
-                     'first_lang': 'язык 1',
-                     'second_lang': 'язык 2',
-                     'role': "роль"
-                     },
-                    ["name"])
-
-            except (ColumnNotFoundError, BadFileError) as e:
-                return self._render(request, err_obj=e)
-            else:
-                return self._render(request, **result)
-
-    def get(self, request):
-        return self._render(request)
+class ReaderImportView(ImportView):
+    model = Reader
+    template_name = "readersRecords/import.html"
+    headers_mapping = {
+        'name': 'имя',
+        'group': 'класс',
+        'profile': 'профиль',
+        'first_lang': 'язык 1',
+        'second_lang': 'язык 2',
+        'role': "роль"
+    }
+    required_fields = ['name']
+    page_title = "Загрузить базу читателей"
 
 
-import_xlsx = ImportView.as_view()
+import_xlsx = ReaderImportView.as_view()
 
 
-class ExportView(View):
+class ReaderExportView(ExportView):
+    model = Reader
+    headers_mapping = {
+        'id': 'id',
+        'name': 'Имя',
+        'group': 'Класс',
+        'profile': 'Профиль',
+        'first_lang': 'Язык 1',
+        'second_lang': 'Язык 2',
+        'books': "Книги"
+    }
+    related_fields = {'books'}
+
     @staticmethod
     def format_related(qs) -> str:
         result = []
@@ -74,32 +55,8 @@ class ExportView(View):
 
         return "\n".join(result)
 
-    def get(self, request, queryset=None):
-        if queryset is None:
-            queryset = Reader.objects.all()
-        file_path = queryset.export_to_file(
-            ".xlsx",
-            {'id': 'id',
-             'name': 'Имя',
-             'group': 'Класс',
-             'profile': 'Профиль',
-             'first_lang': 'Язык 1',
-             'second_lang': 'Язык 2',
-             'books': "Книги"
-             },
-            {'books'},
-            self.format_related
-        )
-
-        return FileResponse(
-            open(file_path, "rb"),
-            filename=datetime.now().strftime("Экспорт читателей %d-%m-%Y.xlsx"),
-            as_attachment=True,
-            headers={"Content-Type": "application/vnd.openxmlformats"
-                     "-officedocument.spreadsheetml.sheet"})
-
-    def post(self, *args, **kwargs):
-        return self.get(*args, **kwargs)
+    def get_filename(self):
+        return f"База читателей {datetime.now():%d-%m-%Y}.xlsx"
 
 
-export_xlsx = ExportView.as_view()
+export_xlsx = ReaderExportView.as_view()

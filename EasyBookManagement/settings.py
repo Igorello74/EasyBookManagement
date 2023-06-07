@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'booksRecords',
     'readersRecords',
-    'purchaseRecords'
+    'purchaseRecords',
+    'importExport'
 ]
 
 MIDDLEWARE = [
