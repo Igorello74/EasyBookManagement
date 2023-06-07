@@ -1,3 +1,4 @@
+import re
 from django.db import models
 
 from core import BulkManager
@@ -33,9 +34,15 @@ class Reader(models.Model):
         verbose_name="заметки"
     )
 
+    class GroupField(models.CharField):
+        def get_db_prep_save(self, value, connection):
+            value = str(value).lower()
+            value = re.sub(r"[\W_]", "", value)
+            return super().get_db_prep_save(value, connection)
+
     # Student specific info
-    group = models.CharField(
-        max_length=3,
+    group = GroupField(
+        max_length=10,
         verbose_name="класс",
         help_text="номер и строчная литера класса без пробела, например: 10а",
         blank=True,
@@ -48,13 +55,36 @@ class Reader(models.Model):
         blank=True
     )
 
-    first_lang = models.CharField(
+    class LangField(models.CharField):
+        langs_mapping = {
+            "а": "анг",
+            "ф": "фра",
+            "н": "нем",
+            "к": "кит",
+            "и": "исп",
+            "e": "анг",
+            "f": "фра",
+            "d": "нем",
+        }
+
+        def get_db_prep_save(self, value, connection):
+            try:
+                value = str(value).lower()
+                value = self.langs_mapping.get(
+                    re.search(r"\w", value).group(0),
+                    value
+                )
+            except Exception:
+                value = ""
+            return super().get_db_prep_save(value, connection)
+
+    first_lang = LangField(
         max_length=20,
         verbose_name='Первый язык',
         blank=True,
     )
 
-    second_lang = models.CharField(
+    second_lang = LangField(
         max_length=20,
         verbose_name='Второй язык',
         blank=True,
