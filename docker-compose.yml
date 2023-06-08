@@ -13,7 +13,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    restart: unless-stopped
+    restart: always
 
   migration:
     build: .
@@ -35,7 +35,7 @@ services:
     volumes:
       - .:/code
     ports:
-      - "8000:8000"
+      - "80:8000"
     environment: 
       - POSTGRES_NAME=postgres
       - POSTGRES_USER=postgres
@@ -43,7 +43,7 @@ services:
     depends_on:
       migration:
         condition: service_completed_successfully
-    restart: unless-stopped
+    restart: always
     
   
   adminer:
