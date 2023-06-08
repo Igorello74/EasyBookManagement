@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+
+<style>
+    details {
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        padding: 0.5em 0.5em 0;
+    }
+
+    summary {
+        font-weight: bold;
+        margin: -0.5em -0.5em 0;
+        padding: 0.5em;
+        font-size: 1.3em;
+    }
+
+    details[open] {
+        padding: 0.5em;
+    }
+
+    details[open]>summary {
+        border-bottom: 1px solid #aaa;
+        margin-bottom: 0.5em;
+    }
+
+    .future-group {
+        color: #767676;
+        /* font-weight: bold; */
+
+    }
+</style>
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Начало</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='readersRecords' %}">Формуляры читателей</a>
+    &rsaquo; <a href="/admin/readersRecords/reader/">Читатели</a>
+    &rsaquo; {{title}}
+</div>
+{% endblock %}
+
+{% block content %}
+<div>
+    {% for num, letters in readers_grouped.items %}
+    <details>
+        <summary>{{num}} классы</summary>
+        {% for letter, students in letters.items %}
+        <details>
+            <summary>{{letter}} <span class="future-group">→ {{new_groups|get_item:letter}}</span></summary>
+            <ul>
+                {% for id, name in students.items %}
+                <li>{{name}}</li>
+                {% endfor %}
+            </ul>
+        </details>
+        {% endfor %}
+    </details>
+    {% endfor %}
+</div>
+{% endblock content %}

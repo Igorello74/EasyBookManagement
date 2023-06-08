@@ -1,20 +1,22 @@
-from datetime import datetime
-
 from django.contrib import admin
+from django.contrib.auth.models import Group, User
 from django.db import models
 from django.db.models import Count
-from django.http import FileResponse
-from django.contrib.auth.models import User, Group
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 from .models import Reader
+from .views import export_xlsx, update_grade
 from .widgets import ChoicesjsTextWidget
-from .views import export_xlsx
 
 
 @admin.action(description='Экспортировать выбранных читателей')
 def export_to_file(modeladmin, request, queryset):
     return export_xlsx(request, queryset)
 
+@admin.action(description="Обновить класс учеников")
+def update_grade_action(modeladmin, request, queryset):
+    return update_grade(request, queryset)
 
 @admin.register(Reader)
 class ReaderAdmin(admin.ModelAdmin):
@@ -43,7 +45,7 @@ class ReaderAdmin(admin.ModelAdmin):
 
     list_filter = ("role", "group",)
 
-    actions = [export_to_file]
+    actions = [export_to_file, update_grade_action]
 
     class Media:
         js = ('js/reader.js',)

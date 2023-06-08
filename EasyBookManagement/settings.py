@@ -128,7 +128,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-   os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR, "static"),
 ]
 
 # Default primary key field type
@@ -136,6 +136,10 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
+
+READERSRECORDS_MAX_GRADE = 11  # specify the last class in the school
+# (like people usually graduate after the 11-th class in Russia)
 
 try:
     from local_settings import *

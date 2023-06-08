@@ -1,11 +1,16 @@
 
+from collections import defaultdict
 from datetime import datetime
+import re
 
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import FileResponse
+from django.http import HttpResponse
+from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.text import Truncator
 from django.views import View
+from django.template.defaulttags import register
 
 from importExport.views import ExportView, ImportView
 
@@ -60,3 +65,54 @@ class ReaderExportView(ExportView):
 
 
 export_xlsx = ReaderExportView.as_view()
+
+
+class defaultdict_recursed(defaultdict):
+    def __init__(self):
+        super().__init__(defaultdict_recursed)
+
+    def __getitem__(self, key):
+        if key == "items":
+            raise KeyError
+        return super().__getitem__(key)
+
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)
+
+class ReadersUpdateGradeAction(View):
+    def post(self, request, queryset=None, *args, **kwargs):
+        if queryset is not None:
+            readers = queryset.values("id", "name", "group")
+            readers_grouped = defaultdict_recursed()
+            groups = set()
+            for r in readers:
+                group_num, group_letter = re.match(
+                    "(\d+)(.+)", r['group']).groups()
+                group_num = int(group_num)
+                groups.add((group_num, group_letter))
+                readers_grouped[group_num][r['group']][r['id']] = r['name']
+
+            new_groups = {}
+            for group_num, group_letter in groups:
+                if group_num < settings.READERSRECORDS_MAX_GRADE:
+                    new_groups[f"{group_num}{group_letter}"] = f"{group_num+1}{group_letter}"
+                else:
+                    new_groups[f"{group_num}{group_letter}"] = "DELETE"
+
+            return TemplateResponse(
+                request,
+                "readersRecords/update-grade.html",
+                {
+                    "readers_grouped": readers_grouped,
+                    "title": "bullshit",
+                    'new_groups': new_groups
+                }
+            )
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse("ok get.")
+
+
+update_grade = ReadersUpdateGradeAction.as_view()
