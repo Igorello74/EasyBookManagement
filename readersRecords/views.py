@@ -1,16 +1,18 @@
 
+import re
 from collections import defaultdict
 from datetime import datetime
-import re
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponse
+from django.db.models import Count
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
+from django.template.defaulttags import register
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.text import Truncator
 from django.views import View
-from django.template.defaulttags import register
 
 from importExport.views import ExportView, ImportView
 
@@ -72,7 +74,7 @@ class defaultdict_recursed(defaultdict):
         super().__init__(defaultdict_recursed)
 
     def __getitem__(self, key):
-        if key == "items":
+        if key in {"items", 'keys', 'values'}:
             raise KeyError
         return super().__getitem__(key)
 
@@ -81,10 +83,13 @@ class defaultdict_recursed(defaultdict):
 def get_item(dictionary, key):
     return dictionary.get(key)
 
+
 class ReadersUpdateGradeAction(View):
     def post(self, request, queryset=None, *args, **kwargs):
         if queryset is not None:
-            readers = queryset.values("id", "name", "group")
+            queryset = queryset.annotate(Count("books"))
+            readers = queryset.filter(role=Reader.STUDENT).values(
+                "id", "name", "group", "books__count")
             readers_grouped = defaultdict_recursed()
             groups = set()
             for r in readers:
@@ -92,24 +97,33 @@ class ReadersUpdateGradeAction(View):
                     "(\d+)(.+)", r['group']).groups()
                 group_num = int(group_num)
                 groups.add((group_num, group_letter))
-                readers_grouped[group_num][r['group']][r['id']] = r['name']
+                readers_grouped[group_num][r['group']][r['id']] = r
 
             new_groups = {}
             for group_num, group_letter in groups:
                 if group_num < settings.READERSRECORDS_MAX_GRADE:
                     new_groups[f"{group_num}{group_letter}"] = f"{group_num+1}{group_letter}"
                 else:
-                    new_groups[f"{group_num}{group_letter}"] = "DELETE"
+                    new_groups[f"{group_num}{group_letter}"] = "К УДАЛЕНИЮ"
+            
+            readers_grouped = dict(sorted(readers_grouped.items()))
 
             return TemplateResponse(
                 request,
                 "readersRecords/update-grade.html",
                 {
                     "readers_grouped": readers_grouped,
-                    "title": "bullshit",
+                    "title": "Перевод учеников в следующий класс",
                     'new_groups': new_groups
                 }
             )
+        else:
+            students = []
+            for key, val in request.POST.items():
+                if key.startswith('student-'):
+                    students.append(Reader(id=key.removeprefix("student-"), group=val))
+            Reader.objects.bulk_update(students, ("group",))
+            return redirect("admin:readersRecords_reader_changelist")
 
     def get(self, request, *args, **kwargs):
         return HttpResponse("ok get.")

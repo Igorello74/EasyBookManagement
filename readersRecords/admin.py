@@ -14,7 +14,7 @@ from .widgets import ChoicesjsTextWidget
 def export_to_file(modeladmin, request, queryset):
     return export_xlsx(request, queryset)
 
-@admin.action(description="Обновить класс учеников")
+@admin.action(description="Перевести учеников в следующий класс")
 def update_grade_action(modeladmin, request, queryset):
     return update_grade(request, queryset)
 

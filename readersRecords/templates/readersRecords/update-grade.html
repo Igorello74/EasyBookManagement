@@ -5,7 +5,7 @@
 
 <style>
     details {
-        border: 1px solid #aaa;
+        border: 1px solid #bababa;
         border-radius: 4px;
         padding: 0.5em 0.5em 0;
     }
@@ -22,14 +22,30 @@
     }
 
     details[open]>summary {
-        border-bottom: 1px solid #aaa;
+        border-bottom: 1px solid #e1e1e1;
         margin-bottom: 0.5em;
+    }
+
+    details+details {
+        margin-top: -1px;
+    }
+
+    details.group {
+        border-style: dotted;
     }
 
     .future-group {
         color: #767676;
         /* font-weight: bold; */
 
+    }
+
+    .no-bullet {
+        list-style-type: none;
+    }
+
+    .new-group-input {
+        width: 20px;
     }
 </style>
 {% endblock %}
@@ -45,21 +61,58 @@
 {% endblock %}
 
 {% block content %}
+<h2>Вы уверены, что хотите перевести всех этих учеников?</h2>
+<p>Здесь вы можете выбрать учеников, которые будут переведены. Учтите, что ученики 11 классов удаляются из системы.</p>
 <div>
-    {% for num, letters in readers_grouped.items %}
-    <details>
-        <summary>{{num}} классы</summary>
-        {% for letter, students in letters.items %}
-        <details>
-            <summary>{{letter}} <span class="future-group">→ {{new_groups|get_item:letter}}</span></summary>
-            <ul>
-                {% for id, name in students.items %}
-                <li>{{name}}</li>
+    <form action="{% url 'readers-update-grade' %}" method="post">
+    {% for group_num, groups in readers_grouped.items %}
+    <details open class="same-year">
+        <summary>{{group_num}} классы</summary>
+        {% for group, students in groups.items %}
+        <details class="group">
+            <summary>
+                <input type="checkbox" checked class="select-all">
+                {{group}} 
+                <span class="future-group">→ {{new_groups|get_item:group}}</span>
+            </summary>
+            <ol>
+                {% for student in students.values %}
+                <li class="no-bullet">
+                    <input type="checkbox" name="student-{{student.id}}" value="{{new_groups|get_item:group}}" checked id="{{student.id}}">
+                    <label for="{{student.id}}">
+                        {{student.name}} {% if student.books__count %}({{student.books__count}} книг на руках){% endif %}
+                    </label>
+                </li>
                 {% endfor %}
-            </ul>
+            </ol>
         </details>
         {% endfor %}
     </details>
     {% endfor %}
 </div>
+<div style="margin-top: 50px;">
+        {% csrf_token %}
+        <button class="button default" style="float: none; padding: 10px 15px;">ПЕРЕВЕСТИ</button>
+        <button class="button" onclick="history.back()" type="button" style="padding: 10px 15px;">Отменить</button>
+    </div>
+</form>
 {% endblock content %}
+
+{% block footer %}
+<script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+<script>
+    $(function() {
+        $(".select-all").click(function() {
+            $(this).parent().parent().find(":checkbox").prop('checked', this.checked);
+        });
+        $("li > :checkbox").click(function() {
+            let res = 1;
+            let $ol = $(this).parent().parent();
+            res = !$ol.find(":checkbox").is(function(){return !this.checked})
+            $ol.parent().find(".select-all").prop("checked", res);
+
+        })
+    })
+</script>
+{% endblock footer %}
+
