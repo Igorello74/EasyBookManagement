@@ -4,7 +4,7 @@ from django.db.models import Sum, Count, F
 
 from . import models
 from .widgets import DateInput
-from EasyBookManagement import format_currency
+from utils import format_currency
 
 
 class InventoryItemInline(admin.TabularInline):
