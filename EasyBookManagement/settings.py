@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'booksRecords',
     'readersRecords',
     'purchaseRecords',
-    'importExport'
+    'importExport',
+    'utils'
 ]
 
 MIDDLEWARE = [
