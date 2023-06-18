@@ -68,6 +68,3 @@ class ReaderAdmin(ModelAdminWithTools):
     class Media:
         js = ("js/reader.js",)
         css = {"all": ("css/reader.css",)}
-
-admin.site.unregister(User)
-admin.site.unregister(Group)
