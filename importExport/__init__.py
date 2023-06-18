@@ -24,7 +24,7 @@ class BulkQuerySet(models.QuerySet):
             self,
             format: str,
             headers_mapping: dict,
-            related_fields=set(),
+            related_fields=None,
             related_handler: Callable[[models.QuerySet], str] = None) -> str:
         """Export objects to a file (.csv, .xlsx, etc.)
 
@@ -40,7 +40,10 @@ class BulkQuerySet(models.QuerySet):
         Note: the filename is meaningless (like "qe1rfF2csg1244"), so you'll
         have to overwrite it in the response
         """
-        if related_fields and related_handler is None:
+
+        related_fields = related_fields or []
+
+        if related_fields and (related_handler is None):
             raise RuntimeError(
                 "You must provide a related_handler if you set related_fields")
 
@@ -78,7 +81,7 @@ class BulkManager(models.Manager):
         return BulkQuerySet(self.model, using=self._db)
 
     def import_from_file(self, file, headers_mapping: dict,
-                         required_fields: list = []) -> dict:
+                         required_fields: list = None) -> dict:
         """Create or update model instancies from an xlsx or csv file
 
         file: a file-like object
@@ -105,6 +108,7 @@ class BulkManager(models.Manager):
             MyModel.objects.import_from_file(file, {"name": "имя"...})
         """
 
+        required_fields = required_fields or []
         file_reader = dict_readers.factory.get(file)
         pk_field_name = self.model._meta.pk.name  # primary key field name
 
