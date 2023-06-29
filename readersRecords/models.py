@@ -1,38 +1,31 @@
 import re
 from django.db import models
+from django.core.exceptions import ValidationError
+
 
 from importExport import BulkManager
 
 
 class Reader(models.Model):
-    '''
+    """
     Модель описывает читателя.
-    '''
+    """
 
     TEACHER = "TE"
     STUDENT = "ST"
     OTHER = "OTH"
-    ROLE_CHOICES = [
-        (TEACHER, "учитель"), (STUDENT, "ученик"), (OTHER, "иной")
-    ]
+    ROLE_CHOICES = [(TEACHER, "учитель"), (STUDENT, "ученик"), (OTHER, "иной")]
 
     role = models.CharField(
-        choices=ROLE_CHOICES,
-        max_length=3,
-        default=STUDENT,
-        verbose_name="роль"
+        choices=ROLE_CHOICES, max_length=3, default=STUDENT, verbose_name="роль"
     )
 
     name = models.CharField(
         max_length=100,
         verbose_name="фамилия, имя",
-        help_text="например, Иванов Иван"
+        help_text="например, Иванов Иван",
     )
-    notes = models.TextField(
-        max_length=500,
-        blank=True,
-        verbose_name="заметки"
-    )
+    notes = models.TextField(max_length=500, blank=True, verbose_name="заметки")
 
     class GroupField(models.CharField):
         def get_db_prep_save(self, value, connection):
@@ -52,7 +45,7 @@ class Reader(models.Model):
         max_length=20,
         verbose_name="профиль",
         help_text="например, ИТ, ТЕХ и т. п.",
-        blank=True
+        blank=True,
     )
 
     class LangField(models.CharField):
@@ -71,8 +64,7 @@ class Reader(models.Model):
             try:
                 value = str(value).lower()
                 value = self.langs_mapping.get(
-                    re.search(r"\w", value).group(0),
-                    value
+                    re.search(r"\w", value).group(0), value
                 )
             except Exception:
                 value = ""
@@ -80,22 +72,22 @@ class Reader(models.Model):
 
     first_lang = LangField(
         max_length=20,
-        verbose_name='Первый язык',
+        verbose_name="Первый язык",
         blank=True,
     )
 
     second_lang = LangField(
         max_length=20,
-        verbose_name='Второй язык',
+        verbose_name="Второй язык",
         blank=True,
     )
 
     books = models.ManyToManyField(
-        'booksRecords.BookInstance',
-        db_table='bookTaking',
+        "booksRecords.BookInstance",
+        db_table="bookTaking",
         blank=True,
-        verbose_name='книги',
-        related_name="taken_by"
+        verbose_name="книги",
+        related_name="taken_by",
     )
 
     def __str__(self):
@@ -104,15 +96,22 @@ class Reader(models.Model):
         else:
             return self.name
 
+    def clean(self) -> None:
+        if self.role == self.STUDENT and not self.group:
+            raise ValidationError(
+                'Для учеников обязательно указывать класс.'
+            )
+        return super().clean()
+
     objects = BulkManager()
 
     class Meta:
         indexes = (
-            models.Index(fields=['name']),
-            models.Index(fields=['role', 'group', 'name']),
-            models.Index(fields=['group']),
+            models.Index(fields=["name"]),
+            models.Index(fields=["role", "group", "name"]),
+            models.Index(fields=["group"]),
         )
-        ordering = ['role', 'group', 'name']
+        ordering = ["role", "group", "name"]
 
         verbose_name = "читатель"
-        verbose_name_plural = 'читатели'
+        verbose_name_plural = "читатели"
