@@ -134,10 +134,15 @@ class BulkManager(models.Manager):
             obj = self.model()
             id = row.get(pk_col_name)
 
+            obj_modified = False
             for field, col_name in headers_mapping.items():
                 if (val := row.get(col_name)) is not None:
                     # if this column is present in the file
                     setattr(obj, field, val)
+                    obj_modified = True
+            
+            if not obj_modified:
+                continue
 
             try:
                 obj.full_clean(exclude=excluded_fields)
@@ -153,10 +158,18 @@ class BulkManager(models.Manager):
                 d = e.message_dict
                 message = []
                 if d.get("__all__"):
-                    message.append(' '.join(d.pop("__all__")))
+                    message.append(
+                        " ".join(
+                            i.lower().removesuffix(".")
+                            for i in d.pop("__all__")
+                        )
+                    )
 
                 for field, reason in d.items():
-                    message.append(f"{headers_mapping[field]} ({' '.join(reason)})")
+                    reason = ", ".join(
+                        i.lower().removesuffix(".") for i in reason
+                    )
+                    message.append(f"{headers_mapping[field]} ({reason})")
                 invalid_objs[row_num] = "; ".join(message)
 
         if invalid_objs and not ignore_errors:
