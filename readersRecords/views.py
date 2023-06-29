@@ -1,12 +1,11 @@
 import re
-from collections import defaultdict
 from datetime import datetime
 
 from django.conf import settings
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
+from django.contrib import admin
 from django.db.models import Count
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.defaulttags import register
 from django.template.response import TemplateResponse
@@ -16,15 +15,13 @@ from django.views import View
 from django.contrib import messages
 
 from importExport.views import ExportView, ImportView
+from utils import defaultdict_recursed
 
 from .models import Reader
 
 
 @method_decorator(
-    [
-        staff_member_required,
-        permission_required("readersRecords.add_reader", raise_exception=True),
-    ],
+    permission_required("readersRecords.add_reader", raise_exception=True),
     name="dispatch",
 )
 class ReaderImportView(ImportView):
@@ -41,14 +38,8 @@ class ReaderImportView(ImportView):
     page_title = "Добавить читателей из файла"
 
 
-import_xlsx = ReaderImportView.as_view()
-
-
 @method_decorator(
-    [
-        staff_member_required,
-        permission_required("readersRecords.view_reader", raise_exception=True),
-    ],
+    permission_required("readersRecords.view_reader", raise_exception=True),
     name="dispatch",
 )
 class ReaderExportView(ExportView):
@@ -77,24 +68,14 @@ class ReaderExportView(ExportView):
         return f"База читателей {datetime.now():%d-%m-%Y}.xlsx"
 
 
-export_xlsx = ReaderExportView.as_view()
-
-
-class defaultdict_recursed(defaultdict):
-    def __init__(self):
-        super().__init__(defaultdict_recursed)
-
-    def __getitem__(self, key):
-        if key in {"items", "keys", "values"}:
-            raise KeyError
-        return super().__getitem__(key)
-
-
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
 
-
+@method_decorator(
+    permission_required("readersRecords.change_reader", raise_exception=True),
+    name="dispatch",
+)
 class ReadersMoveToAnotherGroup(View):
     TO_DELETE = "К УДАЛЕНИЮ"
 
@@ -165,6 +146,10 @@ class ReadersMoveToAnotherGroup(View):
             return redirect("admin:readersRecords_reader_changelist")
 
 
+@method_decorator(
+    permission_required("readersRecords.change_reader", raise_exception=True),
+    name="dispatch",
+)
 class StudentsUpdateGrade(View):
     def get(self, request, *args, **kwargs):
         students = Reader.objects.filter(role=Reader.STUDENT)
@@ -200,7 +185,6 @@ class StudentsUpdateGrade(View):
                 s.group = f"{grade+1}{letter}"
                 to_update.append(s)
 
-
         deleted_count = graduating.delete()[0]
         updated_count = Reader.objects.bulk_update(to_update, ("group",))
 
@@ -213,4 +197,6 @@ class StudentsUpdateGrade(View):
         return redirect("admin:readersRecords_reader_changelist")
 
 
-update_grade = StudentsUpdateGrade.as_view()
+import_xlsx = admin.site.admin_view(ReaderImportView.as_view())
+export_xlsx = admin.site.admin_view(ReaderExportView.as_view())
+update_grade = admin.site.admin_view(StudentsUpdateGrade.as_view())

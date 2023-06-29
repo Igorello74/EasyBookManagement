@@ -1,14 +1,13 @@
 from django.contrib import admin
-from django.contrib.auth.models import Group, User
 from django.db import models
 from django.db.models import Count
-from django.http import HttpResponseRedirect
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
+
+from utils.admin import ModelAdminWithTools
 
 from .models import Reader
 from .views import export_xlsx, update_grade
 from .widgets import ChoicesjsTextWidget
-from utils.admin import ModelAdminWithTools
 
 
 @admin.action(description="Экспортировать выбранных читателей")
@@ -44,7 +43,9 @@ class ReaderAdmin(ModelAdminWithTools):
             {"fields": ("group", "profile", "first_lang", "second_lang")},
         ),
     )
-    formfield_overrides = {models.ManyToManyField: {"widget": ChoicesjsTextWidget}}
+    formfield_overrides = {
+        models.ManyToManyField: {"widget": ChoicesjsTextWidget}
+    }
 
     list_filter = ("role", "group")
 
