@@ -13,6 +13,7 @@ from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.text import Truncator
 from django.views import View
+from django.contrib import messages
 
 from importExport.views import ExportView, ImportView
 
@@ -37,7 +38,7 @@ class ReaderImportView(ImportView):
         "second_lang": "язык 2",
         "role": "роль",
     }
-    page_title = "Загрузить базу читателей"
+    page_title = "Добавить читателей из файла"
 
 
 import_xlsx = ReaderImportView.as_view()
@@ -94,10 +95,10 @@ def get_item(dictionary, key):
     return dictionary.get(key)
 
 
-class ReadersUpdateGradeAction(View):
+class ReadersMoveToAnotherGroup(View):
     TO_DELETE = "К УДАЛЕНИЮ"
 
-    def post(self, request, queryset=None, *args, **kwargs):
+    def get(self, request, queryset=None, *args, **kwargs):
         if queryset is not None:
             queryset = queryset.annotate(Count("books"))
             readers = queryset.filter(role=Reader.STUDENT).values(
@@ -106,7 +107,9 @@ class ReadersUpdateGradeAction(View):
             readers_grouped = defaultdict_recursed()
             groups = set()
             for r in readers:
-                group_num, group_letter = re.match("(\d+)(.+)", r["group"]).groups()
+                group_num, group_letter = re.match(
+                    r"(\d+)(.+)", r["group"]
+                ).groups()
                 group_num = int(group_num)
                 groups.add((group_num, group_letter))
                 readers_grouped[group_num][r["group"]][r["id"]] = r
@@ -139,11 +142,15 @@ class ReadersUpdateGradeAction(View):
                 if key.startswith("student-"):
                     student_id = int(key.removeprefix("student-"))
                     if val != self.TO_DELETE:
-                        students_to_update.append(Reader(id=student_id, group=val))
+                        students_to_update.append(
+                            Reader(id=student_id, group=val)
+                        )
                     else:
                         students_to_delete_ids.append(student_id)
 
-            students_to_delete = Reader.objects.filter(id__in=students_to_delete_ids)
+            students_to_delete = Reader.objects.filter(
+                id__in=students_to_delete_ids
+            )
 
             students_to_delete_with_books = students_to_delete.annotate(
                 Count("books")
@@ -157,8 +164,53 @@ class ReadersUpdateGradeAction(View):
                 Reader.objects.bulk_update(students_to_update, ("group",))
             return redirect("admin:readersRecords_reader_changelist")
 
+
+class StudentsUpdateGrade(View):
     def get(self, request, *args, **kwargs):
-        return HttpResponse("ok get.")
+        students = Reader.objects.filter(role=Reader.STUDENT)
+        graduating = students.filter(
+            group__startswith=str(settings.READERSRECORDS_MAX_GRADE)
+        )
+        graduating_with_books = graduating.annotate(Count("books")).filter(
+            books__count__gt=0
+        )
+
+        if graduating_with_books:
+            s = ", ".join(
+                f"{i.name}, {i.group} ({i.books__count} книг)"
+                for i in graduating_with_books
+            )
+            messages.error(
+                request,
+                f"У следующих выпускающихся учеников не сданы книги: {s}",
+            )
+            return redirect("admin:readersRecords_reader_changelist")
+
+        to_update = []
+
+        for s in students.only("group"):
+            match = re.match(r"(\d+)(.+)", s.group)
+
+            if match is None:
+                continue
+
+            grade, letter = match.groups()
+            grade = int(grade)
+            if grade < settings.READERSRECORDS_MAX_GRADE:
+                s.group = f"{grade+1}{letter}"
+                to_update.append(s)
 
 
-update_grade = ReadersUpdateGradeAction.as_view()
+        deleted_count = graduating.delete()[0]
+        updated_count = Reader.objects.bulk_update(to_update, ("group",))
+
+        messages.success(
+            request,
+            f"{updated_count} учеников переведены в следующий класс. "
+            f"{deleted_count} выпускников удалено.",
+        )
+
+        return redirect("admin:readersRecords_reader_changelist")
+
+
+update_grade = StudentsUpdateGrade.as_view()

@@ -52,18 +52,21 @@ class ReaderAdmin(ModelAdminWithTools):
 
     tools = [
         {
-            "title": "Скачать базу читателей",
-            "id": "exportlink",
-            "url": reverse_lazy("readers-export")
+            "title": "Перевести учеников в следующий класс",
+            "url": reverse_lazy("readers-update-grade"),
         },
         {
-            "title": "Загрузить базу читателей",
+            "title": "Скачать читателей",
+            "id": "exportlink",
+            "url": reverse_lazy("readers-export"),
+        },
+        {
+            "title": "Добавить читателей из файла",
             "id": "importlink",
             "url": reverse_lazy("readers-import"),
             "add_permission_required": True,
         },
     ]
-
 
     class Media:
         js = ("js/reader.js",)
