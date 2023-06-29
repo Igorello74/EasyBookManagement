@@ -24,10 +24,16 @@
         <li class="success">Успешно изменена информация {{ updated }} объектов.</li>
     {% endif %}
 
-    {% if missing_columns %}
-        <li class="error">Не удалось найти следующие колонки в файле: {{ missing_columns|join:", " }}
+    {% if invalid %}
+        <li class="error">В следующих строках таблицы найдены ошибки:
+            <ol>
+                {% for line, message in invalid.items %}
+                <li value="{{line}}" style="all: revert">{{message}};</li>
+                {% endfor %}
+            </ol>
         </li>
-    {% elif bad_format %}
+    {% endif %}
+    {% if bad_format %}
         <li class="error"> Некорректный формат файла. Допустимый формат: таблица Excel (<i>.xlsx</i>) или файл <i>.csv</i>.
         </li>
     {% endif %}
