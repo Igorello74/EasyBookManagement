@@ -37,7 +37,6 @@ class ReaderImportView(ImportView):
         "second_lang": "язык 2",
         "role": "роль",
     }
-    required_fields = ["name"]
     page_title = "Загрузить базу читателей"
 
 

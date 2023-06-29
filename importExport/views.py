@@ -6,7 +6,7 @@ from django.http import FileResponse
 from django.views import View
 from django.views.generic.edit import FormView
 
-from importExport import BadFileError, ColumnNotFoundError
+from importExport import BadFileError
 
 from .forms import ImportForm
 
@@ -44,18 +44,16 @@ class ImportView(FormView):
     form_class = ImportForm
     model = None
     headers_mapping = None
-    required_fields = []
     page_title = None
 
     def form_valid(self, form):
         try:
-            assert all([self.model, self.headers_mapping])
+            assert self.model and self.headers_mapping
             # check if the subclass is properly configured
 
             result = self.model.objects.import_from_file(
-                self.request.FILES['file'],
+                self.request.FILES["file"],
                 self.headers_mapping,
-                self.required_fields
             )
 
         except AssertionError:
@@ -68,8 +66,6 @@ class ImportView(FormView):
                 "You can only use ImportView with models whose default "
                 "manager (objects) is an instance of BulkManager"
             )
-        except ColumnNotFoundError as e:
-            context = self.get_context_data(missing_columns=e.missing_columns)
         except BadFileError:
             context = self.get_context_data(bad_format=True)
         else:
@@ -79,14 +75,18 @@ class ImportView(FormView):
 
     def get_context_data(self, **kwargs):
         if not self.page_title:
-            self.page_title = f"Импортировать {self.model._meta.verbose_name.title()}"
+            self.page_title = (
+                f"Импортировать {self.model._meta.verbose_name.title()}"
+            )
 
-        kwargs.update({
-            'form': ImportForm,
-            'title': self.page_title,
-            'is_nav_sidebar_enabled': True,
-            'available_apps': admin_site.get_app_list(self.request)
-        })
+        kwargs.update(
+            {
+                "form": ImportForm,
+                "title": self.page_title,
+                "is_nav_sidebar_enabled": True,
+                "available_apps": admin_site.get_app_list(self.request),
+            }
+        )
         return super().get_context_data(**kwargs)
 
 
@@ -115,7 +115,7 @@ class ExportView(View):
             self.file_format,
             self.headers_mapping,
             self.related_fields,
-            self.format_related
+            self.format_related,
         )
 
         return FileResponse(
