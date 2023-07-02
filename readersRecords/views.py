@@ -109,7 +109,7 @@ class ChangeStudentsGroupView(View):
 
             return TemplateResponse(
                 request,
-                "readersRecords/update-grade.html",
+                "readersRecords/change-group.html",
                 {
                     "readers_grouped": readers_grouped,
                     "title": "Перевод учеников в следующий класс",
