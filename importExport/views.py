@@ -7,11 +7,12 @@ from django.views import View
 from django.views.generic.edit import FormView
 
 from importExport import BadFileError
+from utils.views import CustomAdminViewMixin
 
 from .forms import ImportForm
 
 
-class ImportView(FormView):
+class ImportView(CustomAdminViewMixin, FormView):
     """Create or update model instancies from an xlsx or csv file
 
     You have to set some attributes when subclassing this view:
@@ -40,7 +41,7 @@ class ImportView(FormView):
     Note: headers (in the file) are case insensitive.
     """
 
-    template_name = None
+    template_name = "importExport/import.html"
     form_class = ImportForm
     model = None
     headers_mapping = None
@@ -74,20 +75,22 @@ class ImportView(FormView):
         return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         if not self.page_title:
             self.page_title = (
                 f"Импортировать {self.model._meta.verbose_name.title()}"
             )
 
-        kwargs.update(
+        context.update(
             {
                 "form": ImportForm,
                 "title": self.page_title,
                 "is_nav_sidebar_enabled": True,
                 "available_apps": admin_site.get_app_list(self.request),
+                "view_name": self.page_title
             }
         )
-        return super().get_context_data(**kwargs)
+        return context
 
 
 class ExportView(View):

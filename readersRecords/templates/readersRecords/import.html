@@ -1,14 +1,6 @@
 {% extends "importExport/import.html" %}
 {% load static %}
 
-{% block breadcrumbs %}
-<div class="breadcrumbs">
-    <a href="{% url 'admin:index' %}">Начало</a>
-    &rsaquo; <a href="{% url 'admin:app_list' app_label='readersRecords' %}">Формуляры читателей</a>
-    &rsaquo; <a href="/admin/readersRecords/reader/">Читатели</a>
-    &rsaquo; {{title}}
-</div>
-{% endblock %}
 
 
 {% block import-instructions %}
