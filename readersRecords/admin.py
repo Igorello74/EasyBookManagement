@@ -6,18 +6,18 @@ from django.urls import reverse_lazy
 from utils.admin import ModelAdminWithTools
 
 from .models import Reader
-from .views import export_xlsx, update_grade
+from .views import export_readers, change_students_group
 from .widgets import ChoicesjsTextWidget
 
 
 @admin.action(description="Экспортировать выбранных читателей")
-def export_to_file(modeladmin, request, queryset):
-    return export_xlsx(request, queryset)
+def export_action(modeladmin, request, queryset):
+    return export_readers(request, queryset)
 
 
-@admin.action(description="Перевести учеников в следующий класс")
-def update_grade_action(modeladmin, request, queryset):
-    return update_grade(request, queryset)
+@admin.action(description="Перевести учеников в другой класс")
+def change_group_action(modeladmin, request, queryset):
+    return change_students_group(request, queryset)
 
 
 @admin.register(Reader)
@@ -49,7 +49,7 @@ class ReaderAdmin(ModelAdminWithTools):
 
     list_filter = ("role", "group")
 
-    actions = [export_to_file, update_grade_action]
+    actions = [export_action, change_group_action]
 
     tools = [
         {

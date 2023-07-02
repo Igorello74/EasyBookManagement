@@ -72,14 +72,15 @@ class ReaderExportView(ExportView):
 def get_item(dictionary, key):
     return dictionary.get(key)
 
+
 @method_decorator(
     permission_required("readersRecords.change_reader", raise_exception=True),
     name="dispatch",
 )
-class ReadersMoveToAnotherGroup(View):
+class ChangeStudentsGroupView(View):
     TO_DELETE = "К УДАЛЕНИЮ"
 
-    def get(self, request, queryset=None, *args, **kwargs):
+    def post(self, request, queryset=None, *args, **kwargs):
         if queryset is not None:
             queryset = queryset.annotate(Count("books"))
             readers = queryset.filter(role=Reader.STUDENT).values(
@@ -150,7 +151,7 @@ class ReadersMoveToAnotherGroup(View):
     permission_required("readersRecords.change_reader", raise_exception=True),
     name="dispatch",
 )
-class StudentsUpdateGrade(View):
+class UpdateStudentsGradeView(View):
     def get(self, request, *args, **kwargs):
         students = Reader.objects.filter(role=Reader.STUDENT)
         graduating = students.filter(
@@ -197,6 +198,7 @@ class StudentsUpdateGrade(View):
         return redirect("admin:readersRecords_reader_changelist")
 
 
-import_xlsx = admin.site.admin_view(ReaderImportView.as_view())
-export_xlsx = admin.site.admin_view(ReaderExportView.as_view())
-update_grade = admin.site.admin_view(StudentsUpdateGrade.as_view())
+change_students_group = ChangeStudentsGroupView.as_view()
+import_readers = admin.site.admin_view(ReaderImportView.as_view())
+export_readers = admin.site.admin_view(ReaderExportView.as_view())
+update_students_grade = admin.site.admin_view(UpdateStudentsGradeView.as_view())
