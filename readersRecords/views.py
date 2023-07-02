@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib import admin
 from django.db.models import Count
 from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.template.defaulttags import register
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
@@ -172,8 +172,19 @@ class UpdateStudentsGradeView(View):
             )
             return redirect("admin:readersRecords_reader_changelist")
 
+        if request.GET.get("confirm") is None:
+            return render(
+                request,
+                "readersRecords/update-grade-confirm.html",
+                {
+                    "title": "Вы уверены?",
+                    "opts": Reader._meta,
+                    "view_name": "Перевести учеников в следующий класс",
+                    "has_view_permission": True,
+                    "graduating": graduating,
+                },
+            )
         to_update = []
-
         for s in students.only("group"):
             match = re.match(r"(\d+)(.+)", s.group)
 
