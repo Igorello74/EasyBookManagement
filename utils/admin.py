@@ -6,7 +6,7 @@ class ModelAdminWithTools(admin.ModelAdmin):
     include_default_tools_after = True
     include_default_tools_before = False
 
-    change_list_template = "admin/extras/change_list.html"
+    change_list_template = "utils/change_list_with_tools.html"
 
 
     def changelist_view(self, request, extra_context=None):
