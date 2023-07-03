@@ -2,20 +2,18 @@ import re
 from datetime import datetime
 
 from django.conf import settings
+from django.contrib import admin, messages
 from django.contrib.auth.decorators import permission_required
-from django.contrib import admin
 from django.db.models import Count
-from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.template.defaulttags import register
-from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.text import Truncator
 from django.views import View
-from django.contrib import messages
+from django.views.generic import TemplateView
 
 from importExport.views import ExportView, ImportView
-from utils import defaultdict_recursed
+from utils.views import CustomAdminViewMixin
 
 from .models import Reader
 
@@ -77,73 +75,34 @@ def get_item(dictionary, key):
     permission_required("readersRecords.change_reader", raise_exception=True),
     name="dispatch",
 )
-class ChangeStudentsGroupView(View):
-    TO_DELETE = "К УДАЛЕНИЮ"
+class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
+    model = Reader
+    view_name = "Изменить класс учеников"
+    template_name = "readersRecords/change-group.html"
+
+    def render_and_get_context(self, context, **response_kwargs):
+        return self.render_to_response(
+            self.get_context_data(**context), **response_kwargs
+        )
 
     def post(self, request, queryset=None, *args, **kwargs):
         if queryset is not None:
-            queryset = queryset.annotate(Count("books"))
-            readers = queryset.filter(role=Reader.STUDENT).values(
-                "id", "name", "group", "books__count"
-            )
-            readers_grouped = defaultdict_recursed()
-            groups = set()
-            for r in readers:
-                group_num, group_letter = re.match(
-                    r"(\d+)(.+)", r["group"]
-                ).groups()
-                group_num = int(group_num)
-                groups.add((group_num, group_letter))
-                readers_grouped[group_num][r["group"]][r["id"]] = r
+            # if this view was invoked from the admin site action
+            queryset = queryset.filter(role=Reader.STUDENT)
+            return self.render_and_get_context({"students": queryset})
 
-            new_groups = {}
-            for group_num, group_letter in groups:
-                if group_num < settings.READERSRECORDS_MAX_GRADE:
-                    new_groups[
-                        f"{group_num}{group_letter}"
-                    ] = f"{group_num+1}{group_letter}"
-                else:
-                    new_groups[f"{group_num}{group_letter}"] = self.TO_DELETE
-
-            readers_grouped = dict(sorted(readers_grouped.items()))
-
-            return TemplateResponse(
-                request,
-                "readersRecords/change-group.html",
-                {
-                    "readers_grouped": readers_grouped,
-                    "title": "Перевод учеников в следующий класс",
-                    "new_groups": new_groups,
-                },
-            )
         else:
-            students_to_update = []
-            students_to_delete_ids = []
-
-            for key, val in request.POST.items():
-                if key.startswith("student-"):
-                    student_id = int(key.removeprefix("student-"))
-                    if val != self.TO_DELETE:
-                        students_to_update.append(
-                            Reader(id=student_id, group=val)
-                        )
-                    else:
-                        students_to_delete_ids.append(student_id)
-
-            students_to_delete = Reader.objects.filter(
-                id__in=students_to_delete_ids
+            queryset = Reader.objects.filter(
+                id__in=request.POST.getlist("students")
             )
 
-            students_to_delete_with_books = students_to_delete.annotate(
-                Count("books")
-            ).filter(books__count__gt=0)
-
-            if students_to_delete_with_books.exists():
-                return HttpResponse(
-                    "Ты совершаешь ошибку. Нельзя удалять тех, на ком записаны книги!!!"
+            if not request.POST.get("group"):
+                messages.error(
+                    "Вы должны ввести класс, в который хотите перевести учеников"
                 )
-            else:
-                Reader.objects.bulk_update(students_to_update, ("group",))
+                return self.render_and_get_context({"students": queryset})
+
+            queryset.update(group=request.POST["group"])
             return redirect("admin:readersRecords_reader_changelist")
 
 

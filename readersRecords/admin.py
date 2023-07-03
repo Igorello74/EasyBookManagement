@@ -15,7 +15,7 @@ def export_action(modeladmin, request, queryset):
     return export_readers(request, queryset)
 
 
-@admin.action(description="Перевести учеников в другой класс")
+@admin.action(description="Изменить класс учеников")
 def change_group_action(modeladmin, request, queryset):
     return change_students_group(request, queryset)
 
