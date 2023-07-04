@@ -1,9 +1,38 @@
 import re
 from django.db import models
 from django.core.exceptions import ValidationError
-
+from django.contrib import admin
 
 from importExport import BulkManager
+
+GROUP_PATTERN = re.compile(r"(\d+).*?([а-яёa-z]+)", re.I)
+# a regexp pattern matching any string that resembles a group.
+# Like "11a", "11 a", "11-a", "11 (a)"
+
+
+class LangField(models.CharField):
+    langs_mapping = {
+        "а": "анг",
+        "ф": "фра",
+        "н": "нем",
+        "к": "кит",
+        "и": "исп",
+        "e": "анг",
+        "f": "фра",
+        "d": "нем",
+    }
+
+    def get_db_prep_save(self, value, connection):
+        if hasattr(value, "as_sql"):
+            return value
+        try:
+            value = str(value).lower()
+            value = self.langs_mapping.get(
+                re.search(r"\w", value).group(0), value
+            )
+        except Exception:
+            value = ""
+        return super().get_db_prep_save(value, connection)
 
 
 class Reader(models.Model):
@@ -27,18 +56,12 @@ class Reader(models.Model):
     )
     notes = models.TextField(max_length=500, blank=True, verbose_name="заметки")
 
-    class GroupField(models.CharField):
-        def get_db_prep_save(self, value, connection):
-            value = str(value).lower()
-            value = re.sub(r"[\W_]", "", value)
-            return super().get_db_prep_save(value, connection)
-
     # Student specific info
-    group = GroupField(
-        max_length=10,
-        verbose_name="класс",
-        help_text="номер и строчная литера класса без пробела, например: 10а",
-        blank=True,
+    group_num = models.PositiveSmallIntegerField(
+        verbose_name="номер класса", null=True, blank=True
+    )
+    group_letter = models.CharField(
+        max_length=10, verbose_name="буква класса", blank=True
     )
 
     profile = models.CharField(
@@ -47,28 +70,6 @@ class Reader(models.Model):
         help_text="например, ИТ, ТЕХ и т. п.",
         blank=True,
     )
-
-    class LangField(models.CharField):
-        langs_mapping = {
-            "а": "анг",
-            "ф": "фра",
-            "н": "нем",
-            "к": "кит",
-            "и": "исп",
-            "e": "анг",
-            "f": "фра",
-            "d": "нем",
-        }
-
-        def get_db_prep_save(self, value, connection):
-            try:
-                value = str(value).lower()
-                value = self.langs_mapping.get(
-                    re.search(r"\w", value).group(0), value
-                )
-            except Exception:
-                value = ""
-            return super().get_db_prep_save(value, connection)
 
     first_lang = LangField(
         max_length=20,
@@ -96,22 +97,55 @@ class Reader(models.Model):
         else:
             return self.name
 
-    def clean(self) -> None:
+    def clean(self):
         if self.role == self.STUDENT and not self.group:
-            raise ValidationError(
-                'Для учеников обязательно указывать класс.'
-            )
+            raise ValidationError("Для учеников обязательно указывать класс.")
         return super().clean()
 
-    objects = BulkManager()
+    class ReaderManager(BulkManager):
+        def get_queryset(self):
+            qs = super().get_queryset()
+            qs = qs.annotate(
+                group_concated=models.functions.Concat(
+                    "group_num", "group_letter", output_field=models.CharField()
+                )
+            )
+            return qs
+
+    objects = ReaderManager()
+
+    @property
+    @admin.display(description="класс")
+    def group(self):
+        # If it's a db-retrieved object, it has a group_concated attribute.
+        # On the other hand, if it's a newly created object, it has no
+        # db calculated values, so we simply concatenate value ourselves.
+        # We need this ugly {self.group_num or ''} thing, because
+        # self.group_num might be None, which would be literally casted
+        # to a string "None"
+        return getattr(
+            self, "group_concated", f"{self.group_num or ''}{self.group_letter}"
+        )
+
+    @group.setter
+    def group(self, value):
+        value = str(value)
+        match = GROUP_PATTERN.search(value)
+        if match:
+            self.group_num = int(match[1])
+            self.group_letter = match[2].lower()
+            self.group_num = int(self.group_num)
+        else:
+            self.group_num = None
+            self.group_letter = value
 
     class Meta:
         indexes = (
             models.Index(fields=["name"]),
-            models.Index(fields=["role", "group", "name"]),
-            models.Index(fields=["group"]),
+            models.Index(fields=["role", "group_num", "group_letter", "name"]),
+            models.Index(fields=["group_num", "group_letter"]),
         )
-        ordering = ["role", "group", "name"]
+        ordering = ["role", "group_num", "group_letter", "name"]
 
         verbose_name = "читатель"
         verbose_name_plural = "читатели"
