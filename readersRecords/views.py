@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.decorators import permission_required
 from django.db.models import Count, F
+from django.db.transaction import atomic
 from django.shortcuts import redirect, render
 from django.template.defaulttags import register
 from django.utils.decorators import method_decorator
@@ -148,8 +149,9 @@ class UpdateStudentsGradeView(View):
                 },
             )
 
-        deleted, _ = graduating.delete()
-        updated = non_graduating.update(group_num=F("group_num") + 1)
+        with atomic():
+            deleted, _ = graduating.delete()
+            updated = non_graduating.update(group_num=F("group_num") + 1)
 
         messages.success(
             request,

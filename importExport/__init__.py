@@ -6,20 +6,20 @@ from tempfile import NamedTemporaryFile
 from typing import Callable
 
 from django.core.exceptions import ValidationError
-from django.db import models
-from django.db.models import Count
+from django.db.transaction import atomic
+from django.db.models import Count, QuerySet, Manager
 
 from . import dict_readers, dict_writers
 from .dict_readers import BadFileError
 
 
-class BulkQuerySet(models.QuerySet):
+class BulkQuerySet(QuerySet):
     def export_to_file(
         self,
         format: str,
         headers_mapping: dict,
         related_fields=None,
-        related_handler: Callable[[models.QuerySet], str] = None,
+        related_handler: Callable[[QuerySet], str] = None,
     ) -> str:
         """Export objects to a file (.csv, .xlsx, etc.)
 
@@ -73,7 +73,7 @@ class BulkQuerySet(models.QuerySet):
             return buffer.name
 
 
-class BulkManager(models.Manager):
+class BulkManager(Manager):
     """Implement some bulk operations on models,
     such as import/export from/to json, csv, xlsx etc.
     """
@@ -182,12 +182,15 @@ class BulkManager(models.Manager):
 
         created = updated = 0
         try:
-            if objs_to_create:
-                created = len(self.model.objects.bulk_create(objs_to_create))
-            if objs_to_update:
-                updated = self.model.objects.bulk_update(
-                    objs_to_update, modified_fields
-                )
+            with atomic():
+                if objs_to_create:
+                    created = len(
+                        self.model.objects.bulk_create(objs_to_create)
+                    )
+                if objs_to_update:
+                    updated = self.model.objects.bulk_update(
+                        objs_to_update, modified_fields
+                    )
         except ValueError:
             raise BadFileError
 
