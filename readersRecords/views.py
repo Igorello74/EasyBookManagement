@@ -102,7 +102,8 @@ class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
                 )
                 return self.render_and_get_context({"students": queryset})
 
-            queryset.update(group=request.POST["group"])
+            parsed = Reader._parse_group(request.POST["group"])
+            queryset.update(group_num=parsed.num, group_letter=parsed.letter)
             return redirect("admin:readersRecords_reader_changelist")
 
 
