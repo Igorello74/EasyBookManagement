@@ -16,14 +16,14 @@ class BookAdmin(admin.ModelAdmin):
         if self.num_individual:
             result.append(f"({self.num_individual} индивидуальных)")
 
-        return ('<a href="{href}?book_id={book_id}" '
-                'title="Показать экземпляры"'
-                '>{result}</a>'
-                ).format(
-                    href=reverse(
-                        "admin:booksRecords_bookinstance_changelist"),
-                    book_id=self.id,
-                    result=' '.join(result)
+        return (
+            '<a href="{href}?book_id={book_id}" '
+            'title="Показать экземпляры"'
+            ">{result}</a>"
+        ).format(
+            href=reverse("admin:booksRecords_bookinstance_changelist"),
+            book_id=self.id,
+            result=" ".join(result),
         )
 
     @admin.display(description="Количество взятых экземпляров")
@@ -32,62 +32,67 @@ class BookAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        qs = qs.select_related('subject')
+        qs = qs.select_related("subject")
         qs = qs.annotate(
-            num_taken=Count("bookinstance", filter=Q(
-                bookinstance__taken_by__isnull=False)),
+            num_taken=Count(
+                "bookinstance", filter=Q(bookinstance__taken_by__isnull=False)
+            ),
             num_purchased=Sum("inventory_items__num_bought", distinct=True),
-            num_individual=Count("bookinstance", filter=Q(
-                bookinstance__represents_multiple=False)),
+            num_individual=Count(
+                "bookinstance",
+                filter=Q(bookinstance__represents_multiple=False),
+            ),
         )
         return qs
 
-    search_fields = ['name', 'authors', 'subject__name',
-                     'grade', 'isbn', ]
+    search_fields = [
+        "name",
+        "authors",
+        "subject__name",
+        "grade",
+        "isbn",
+    ]
 
     list_display = (
-        'name',
-        'authors',
-        'subject',
-        'grade',
+        "name",
+        "authors",
+        "subject",
+        "grade",
         get_number_of_instances,
-        get_num_of_taken_instances
+        get_num_of_taken_instances,
     )
-    empty_value_display = ''
+    empty_value_display = ""
 
-    list_filter = ('subject', 'grade')
+    list_filter = ("subject", "grade")
 
     fieldsets = (
-        ('Основная информация', {'fields': ('name', 'authors')}),
-
-        ('Информация об издании',
-         {'fields': ('publisher', 'city', 'year', 'edition')}),
-
-        ("Идентификаторы",
-         {'fields': ('isbn',)}),
-
-        ("Учебная информация",
-         {'fields': ('grade', 'subject')}),
+        ("Основная информация", {"fields": ("name", "authors")}),
+        (
+            "Информация об издании",
+            {"fields": ("publisher", "city", "year", "edition")},
+        ),
+        ("Идентификаторы", {"fields": ("isbn",)}),
+        ("Учебная информация", {"fields": ("grade", "subject")}),
     )
 
-    autocomplete_fields = ['subject']
+    autocomplete_fields = ["subject"]
 
 
 @admin.register(models.BookInstance)
 class BookInstanceAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        qs = qs.select_related().prefetch_related("taken_by")
+        qs = qs.select_related().annotate(Count("taken_by"))
         return qs
-        
+
     @admin.display(description="взята")
     @mark_safe
     def get_taken_by(self, obj):
-        taken_by_num = obj.taken_by.count()
+        taken_by_num = obj.taken_by__count
         if taken_by_num > 1:
             return f"{taken_by_num} читателями"
         elif taken_by_num == 1:
-            reader = obj.taken_by.all()[0]
+            reader = obj.taken_by.first()
             href = reverse(
                 "admin:readersRecords_reader_change", args=(reader.id,)
             )
@@ -98,18 +103,18 @@ class BookInstanceAdmin(admin.ModelAdmin):
     @admin.display(description="взята")
     @mark_safe
     def get_taken_by_verbose(self, obj):
-        taken_by = list(obj.taken_by.all().only("id", "name", "group"))
+        taken_by = list(
+            obj.taken_by.all().only("id", "name", "group_num", "group_letter")
+        )
         if taken_by:
             for ind, reader in enumerate(taken_by):
                 href = reverse(
                     "admin:readersRecords_reader_change", args=(reader.id,)
                 )
-                taken_by[ind] = (
-                    f'<a href="{href}">{reader}</a>'
-                )
+                taken_by[ind] = f'<a href="{href}">{reader}</a>'
 
             if len(taken_by) > 1:
-                return ('; '.join(i for i in taken_by))
+                return "; ".join(i for i in taken_by)
 
             else:
                 return taken_by[0]
@@ -122,30 +127,41 @@ class BookInstanceAdmin(admin.ModelAdmin):
         href = reverse("admin:booksRecords_book_change", args=(obj.book.id,))
         return (
             f'<a href="{href}" title="Редактировать книгу (не экземпляр)"'
-            f'target="_blank" rel="noopener noreferrer" style="color:inherit">{obj.book.name}</a>')
+            f'target="_blank" rel="noopener noreferrer" style="color:inherit">{obj.book.name}</a>'
+        )
 
     @admin.display(description="автор")
     def get_book_authors(self, obj):
         return obj.book.authors
 
-    list_display = ('barcode', 'get_book_name_with_link',
-                    "represents_multiple", 'status', 'get_taken_by')
-    readonly_fields = ('get_taken_by_verbose',)
-    list_filter = ("represents_multiple", 'status', 'book__grade')
-    radio_fields = {'represents_multiple': admin.VERTICAL}
-    fields = ('status', 'barcode', 'book', "represents_multiple",
-              "notes", 'get_taken_by_verbose')
-    autocomplete_fields = ['book']
-    search_fields = ('barcode', 'book__name', 'book__authors')
+    list_display = (
+        "barcode",
+        "get_book_name_with_link",
+        "represents_multiple",
+        "status",
+        "get_taken_by",
+    )
+    readonly_fields = ("get_taken_by_verbose",)
+    list_filter = ("represents_multiple", "status", "book__grade")
+    radio_fields = {"represents_multiple": admin.VERTICAL}
+    fields = (
+        "status",
+        "barcode",
+        "book",
+        "represents_multiple",
+        "notes",
+        "get_taken_by_verbose",
+    )
+    autocomplete_fields = ["book"]
+    search_fields = ("barcode", "book__name", "book__authors")
 
 
 @admin.register(models.Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    search_fields = ['name']
-    
+    search_fields = ["name"]
+
     def get_model_perms(self, request):
         """
         Return empty perms dict thus hiding the model from admin index.
         """
         return {}
-
