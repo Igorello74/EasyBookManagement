@@ -2,12 +2,12 @@
 such as import/export from/to json, csv, xlsx etc.
 """
 
-from collections import namedtuple
 from tempfile import NamedTemporaryFile
 from typing import Callable
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Count
 
 from . import dict_readers, dict_writers
 from .dict_readers import BadFileError
@@ -52,15 +52,20 @@ class BulkQuerySet(models.QuerySet):
             )
             if related_fields:
                 self = self.prefetch_related(*related_fields)
+                for field_name in related_fields:
+                    self = self.annotate(Count(field_name))
+            self = self.order_by(*self.model._meta.ordering)
             file_writer.writeheader()
 
             for obj in self:
                 row = {}
-                for field, header in headers_mapping.items():
-                    row[header] = getattr(obj, field)
-                    if field in related_fields:
-                        row[header] = related_handler(row[header].all())
-
+                for field_name, header in headers_mapping.items():
+                    row[header] = getattr(obj, field_name)
+                    if field_name in related_fields:
+                        if getattr(obj, f"{field_name}__count"):
+                            row[header] = related_handler(row[header].all())
+                        else:
+                            del row[header]
                 file_writer.writerow(row)
 
             file_writer.save()
@@ -140,7 +145,7 @@ class BulkManager(models.Manager):
                     # if this column is present in the file
                     setattr(obj, field, val)
                     obj_modified = True
-            
+
             if not obj_modified:
                 continue
 
