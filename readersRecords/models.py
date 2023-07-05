@@ -1,3 +1,4 @@
+from collections import namedtuple
 import re
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -8,6 +9,8 @@ from importExport import BulkManager
 GROUP_PATTERN = re.compile(r"(\d+).*?([а-яёa-z]+)", re.I)
 # a regexp pattern matching any string that resembles a group.
 # Like "11a", "11 a", "11-a", "11 (a)"
+
+READER_GROUP_LETTER_MAX_LENGTH = 10
 
 
 class LangField(models.CharField):
@@ -35,6 +38,9 @@ class LangField(models.CharField):
         return super().get_db_prep_save(value, connection)
 
 
+Group = namedtuple("Group", ("num", "letter"))
+
+
 class Reader(models.Model):
     """
     Модель описывает читателя.
@@ -54,6 +60,7 @@ class Reader(models.Model):
         verbose_name="фамилия, имя",
         help_text="например, Иванов Иван",
     )
+
     notes = models.TextField(max_length=500, blank=True, verbose_name="заметки")
 
     # Student specific info
@@ -61,7 +68,10 @@ class Reader(models.Model):
         verbose_name="номер класса", null=True, blank=True
     )
     group_letter = models.CharField(
-        max_length=10, verbose_name="буква класса", blank=True
+        max_length=READER_GROUP_LETTER_MAX_LENGTH,
+        # the const is used in the method _parse_group
+        verbose_name="буква класса",
+        blank=True,
     )
 
     profile = models.CharField(
@@ -98,7 +108,9 @@ class Reader(models.Model):
             return self.name
 
     def clean(self):
-        if self.role == self.STUDENT and not self.group:
+        if self.role == self.STUDENT and not (
+            self.group_num or self.group_letter
+        ):
             raise ValidationError("Для учеников обязательно указывать класс.")
         return super().clean()
 
@@ -114,30 +126,38 @@ class Reader(models.Model):
 
     objects = ReaderManager()
 
+    @staticmethod
+    def _format_group(group_num, group_letter):
+        # We need this ugly {group_num or ''} thing, because
+        # group_num might be None, which would be literally casted
+        # to a string "None"
+        return f"{group_num or ''}{group_letter or ''}"
+
+    @staticmethod
+    def _parse_group(value: str) -> Group:
+        value = str(value)
+        match = GROUP_PATTERN.search(value)
+
+        if match:
+            num = int(match[1])
+            letter = match[2].lower()
+        else:
+            num = None
+            letter = value
+
+        letter = letter[:READER_GROUP_LETTER_MAX_LENGTH]
+        return Group(num, letter)
+
     @property
     @admin.display(description="класс")
     def group(self):
-        # If it's a db-retrieved object, it has a group_concated attribute.
-        # On the other hand, if it's a newly created object, it has no
-        # db calculated values, so we simply concatenate value ourselves.
-        # We need this ugly {self.group_num or ''} thing, because
-        # self.group_num might be None, which would be literally casted
-        # to a string "None"
-        return getattr(
-            self, "group_concated", f"{self.group_num or ''}{self.group_letter}"
-        )
+        return self._format_group(self.group_num, self.group_letter)
 
     @group.setter
     def group(self, value):
-        value = str(value)
-        match = GROUP_PATTERN.search(value)
-        if match:
-            self.group_num = int(match[1])
-            self.group_letter = match[2].lower()
-            self.group_num = int(self.group_num)
-        else:
-            self.group_num = None
-            self.group_letter = value
+        result = self._parse_group(value)
+        self.group_num = result.num
+        self.group_letter = result.letter
 
     class Meta:
         indexes = (
