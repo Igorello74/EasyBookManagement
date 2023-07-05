@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.db import models
 from django.db.models import Count
-from django.forms.utils import ErrorList
+from django.db.models.functions import Concat
 from django.urls import reverse_lazy
 
 from utils.admin import ModelAdminWithTools
@@ -56,7 +56,17 @@ class ReaderAdmin(ModelAdminWithTools):
 
         return qs
 
-    @admin.display(description="Количество взятых книг")
+    def get_search_results(self, request, queryset, search_term):
+        queryset = queryset.annotate(
+            group_concated=Concat(
+                "group_num", "group_letter", output_field=models.CharField()
+            )
+        )
+        return super().get_search_results(request, queryset, search_term)
+
+    @admin.display(
+        description="Количество взятых книг", ordering="books__count"
+    )
     def get_books_num(self):
         return self.books__count
 

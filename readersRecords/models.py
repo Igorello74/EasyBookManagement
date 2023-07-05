@@ -114,17 +114,7 @@ class Reader(models.Model):
             raise ValidationError("Для учеников обязательно указывать класс.")
         return super().clean()
 
-    class ReaderManager(BulkManager):
-        def get_queryset(self):
-            qs = super().get_queryset()
-            qs = qs.annotate(
-                group_concated=models.functions.Concat(
-                    "group_num", "group_letter", output_field=models.CharField()
-                )
-            )
-            return qs
-
-    objects = ReaderManager()
+    objects = BulkManager()
 
     @staticmethod
     def _format_group(group_num, group_letter):
