@@ -4,7 +4,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.decorators import permission_required
-from django.db.models import Count
+from django.db.models import Count, F
 from django.shortcuts import redirect, render
 from django.template.defaulttags import register
 from django.utils.decorators import method_decorator
@@ -115,7 +115,10 @@ class UpdateStudentsGradeView(View):
     def get(self, request, *args, **kwargs):
         students = Reader.objects.filter(role=Reader.STUDENT)
         graduating = students.filter(
-            group__startswith=str(settings.READERSRECORDS_MAX_GRADE)
+            group_num__gte=settings.READERSRECORDS_MAX_GRADE
+        )
+        non_graduating = students.filter(
+            group_num__lt=settings.READERSRECORDS_MAX_GRADE
         )
         graduating_with_books = graduating.annotate(Count("books")).filter(
             books__count__gt=0
@@ -144,26 +147,14 @@ class UpdateStudentsGradeView(View):
                     "graduating": graduating,
                 },
             )
-        to_update = []
-        for s in students.only("group"):
-            match = re.match(r"(\d+)(.+)", s.group)
 
-            if match is None:
-                continue
-
-            grade, letter = match.groups()
-            grade = int(grade)
-            if grade < settings.READERSRECORDS_MAX_GRADE:
-                s.group = f"{grade+1}{letter}"
-                to_update.append(s)
-
-        deleted_count = graduating.delete()[0]
-        updated_count = Reader.objects.bulk_update(to_update, ("group",))
+        deleted, _ = graduating.delete()
+        updated = non_graduating.update(group_num=F("group_num") + 1)
 
         messages.success(
             request,
-            f"{updated_count} учеников переведены в следующий класс. "
-            f"{deleted_count} выпускников удалено.",
+            f"{updated} учеников были переведены в следующий класс. "
+            f"{deleted} выпускников были удалены.",
         )
 
         return redirect("admin:readersRecords_reader_changelist")

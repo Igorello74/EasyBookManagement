@@ -74,18 +74,23 @@
 {% endblock %}
 
 {% block content %}
-  <p>
-    Вы уверены? Все ученики будут переведены в следующий класс, а выпускающиеся — будут <b style="color: var(--delete-button-bg);">удалены</b>.
-  </p>
+{% if graduating %}
+<p>
+  Вы уверены? Все ученики будут переведены в следующий класс, а выпускающиеся — будут <b style="color: var(--delete-button-bg);">удалены</b>.
+</p>
   <p>У всех выпускающихся сданы все книги.</p>
   <details>
-    <summary>Ученики, которые будут удалены</summary>
+    <summary>Ученики, которые будут удалены ({{graduating|length}} человек)</summary>
     <ol>
       {% for s in graduating %}
-        <li>{{ s.name }} ({{ s.group }})</li>
+      <li>{{ s.name }} ({{ s.group }})</li>
       {% endfor %}
     </ol>
   </details>
+  {% else %}
+  <p>Вы уверены? Все ученики будут переведены в следующий класс.</p>
+  <p>Кроме того, выпускающихся нет. Никто не будет удален.</p>
+  {% endif %}
   <div>
     <a id="confirm-button" href="{% url 'readers-update-grade' %}?confirm">Да, перевести всех и удалить выпускающихся</a>
     <a id="cancel-button" href="javascript:history.back()">Нет, вернуться к списку читателей</a>
