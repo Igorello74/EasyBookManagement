@@ -1,0 +1,42 @@
+{% load i18n %}
+<style>
+  
+  #selected > a::before {
+    content: "•";
+    font-size: 1.25em;
+    color: var(--body-fg);
+    position: absolute;
+    margin-left: -10px;
+  }
+
+  /*
+  #selected > a {
+    border-left: 5px solid var(--hairline-color);
+    padding-left: 10px;
+    margin-left: -15px
+  }
+  */
+  li#selected > a {
+    color: var(--link-selected-fg);
+  }
+</style>
+
+<details data-filter-title="{{ title }}" open>
+  <summary>
+    {% blocktranslate with filter_title=title %} By {{ filter_title }} {% endblocktranslate %}
+  </summary>
+  <ul>
+  {% for choice in choices %}
+    <li{% if choice.selected %} id="selected"{% endif %}>
+    <a href="{{ choice.query_string|iriencode }}">{{ choice.display }}</a>
+    {% if choice.sub_choices %}
+      <ul>
+        {% for sub_choice in choice.sub_choices %}
+          <li {% if sub_choice.selected %}id="selected"{% endif %}><a href="{{ sub_choice.query_string|iriencode }}">{{sub_choice.display}}</a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </li>
+  {% endfor %}
+  </ul>
+</details>

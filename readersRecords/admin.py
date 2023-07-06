@@ -1,8 +1,10 @@
+from typing import Any, List, Optional, Tuple
 from django import forms
 from django.contrib import admin
 from django.db import models
 from django.db.models import Count
 from django.db.models.functions import Concat
+from django.db.models.query import QuerySet
 from django.urls import reverse_lazy
 
 from utils.admin import ModelAdminWithTools
@@ -48,6 +50,73 @@ class ReaderAdminForm(forms.ModelForm):
         }
 
 
+class GroupFilter(admin.SimpleListFilter):
+    title = "класс"
+    template = "readersRecords/reader-admin-filter.html"
+    parameter_name = "group"
+    query_separator = "~"
+
+    def lookups(self, request, model_admin):
+        result = list(
+            Reader.objects.values_list("group_num", "group_letter")
+            .order_by("group_num", "group_letter")
+            .distinct()
+        )
+
+        groups = {}
+        for num, letter in result:
+            groups.setdefault(num, []).append(letter)
+        self.groups = groups
+
+        print(groups)
+        return [...]
+
+    def queryset(self, request, queryset):
+        v = str(self.value())
+        v = v.split(self.query_separator)
+        match v:
+            case ["None"]:
+                return queryset
+            case [num]:
+                return queryset.filter(group_num=num)
+            case [num, letter]:
+                return queryset.filter(group_num=num, group_letter=letter)
+            case _:
+                return queryset
+
+    def choices(self, changelist):
+        yield {
+            "selected": self.value() is None,
+            "query_string": changelist.get_query_string(
+                remove=[self.parameter_name]
+            ),
+            "display": "Все",
+        }
+        for num, letters_list in self.groups.items():
+            sub_choices = []
+            for letter in letters_list:
+                lookup = f"{num}{self.query_separator}{letter}"
+                sub_choices.append(
+                    {
+                        "display": Reader.format_group(num, letter),
+                        "query_string": changelist.get_query_string(
+                            {self.parameter_name: lookup}
+                        ),
+                        "selected": self.value() == lookup,
+                    }
+                )
+
+            lookup = str(num)
+            yield {
+                "selected": self.value() == str(lookup),
+                "query_string": changelist.get_query_string(
+                    {self.parameter_name: lookup}
+                ),
+                "display": num,
+                "sub_choices": sub_choices,
+            }
+
+
 @admin.register(Reader)
 class ReaderAdmin(ModelAdminWithTools):
     def get_queryset(self, request):
@@ -72,7 +141,12 @@ class ReaderAdmin(ModelAdminWithTools):
 
     form = ReaderAdminForm
 
-    list_display = ("name", "role", "group", get_books_num)
+    list_display = (
+        "name",
+        "group",
+        "role",
+        get_books_num,
+    )
     search_fields = ("name", "group_concated", "id")
     readonly_fields = ("id",)
     fieldsets = (
@@ -96,7 +170,7 @@ class ReaderAdmin(ModelAdminWithTools):
         models.ManyToManyField: {"widget": ChoicesjsTextWidget}
     }
 
-    list_filter = ("role", "group_num", "group_letter")
+    list_filter = ("role", GroupFilter)
     list_per_page = 250
 
     actions = [export_action, change_group_action]
