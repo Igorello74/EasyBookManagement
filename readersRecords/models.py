@@ -117,7 +117,7 @@ class Reader(models.Model):
     objects = BulkManager()
 
     @staticmethod
-    def _format_group(group_num, group_letter):
+    def format_group(group_num, group_letter):
         # We need this ugly {group_num or ''} thing, because
         # group_num might be None, which would be literally casted
         # to a string "None"
@@ -141,7 +141,7 @@ class Reader(models.Model):
     @property
     @admin.display(description="класс")
     def group(self):
-        return self._format_group(self.group_num, self.group_letter)
+        return self.format_group(self.group_num, self.group_letter)
 
     @group.setter
     def group(self, value):

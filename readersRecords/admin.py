@@ -27,7 +27,7 @@ class ReaderAdminForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         g_num = self.initial.get("group_num")
         g_letter = self.initial.get("group_letter")
-        self.initial["group"] = Reader._format_group(g_num, g_letter)
+        self.initial["group"] = Reader.format_group(g_num, g_letter)
 
     group = forms.CharField(
         max_length=10,
