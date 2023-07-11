@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 
 from django.conf import settings
@@ -13,10 +12,15 @@ from django.utils.text import Truncator
 from django.views import View
 from django.views.generic import TemplateView
 
+from importExport import VirtualField
 from importExport.views import ExportView, ImportView
 from utils.views import CustomAdminViewMixin
 
 from .models import Reader
+
+
+def reader_group_setter(reader: Reader, val):
+    reader.group = val
 
 
 @method_decorator(
@@ -36,6 +40,11 @@ class ReaderImportView(ImportView):
     }
     title = "Добавить читателей из файла"
     allow_update = False
+    virtual_fields = {
+        "group": VirtualField(
+            reader_group_setter, ["group_num", "group_letter"]
+        )
+    }
 
 
 @method_decorator(

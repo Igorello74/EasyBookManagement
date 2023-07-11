@@ -2,15 +2,22 @@
 such as import/export from/to json, csv, xlsx etc.
 """
 
+from collections import namedtuple
 from tempfile import NamedTemporaryFile
 from typing import Callable
 
 from django.core.exceptions import ValidationError
+from django.db.models import Count, Manager, QuerySet
 from django.db.transaction import atomic
-from django.db.models import Count, QuerySet, Manager
 
 from . import dict_readers, dict_writers
 from .dict_readers import BadFileError
+
+
+class InvalidDataError(RuntimeError):
+    def __init__(self, invalid_objs: dict, *args):
+        super().__init__(*args)
+        self.invalid_objs = invalid_objs
 
 
 class BulkQuerySet(QuerySet):
@@ -73,6 +80,9 @@ class BulkQuerySet(QuerySet):
             return buffer.name
 
 
+VirtualField = namedtuple("VirtualField", ["setter", "real_fields"])
+
+
 class BulkManager(Manager):
     """Implement some bulk operations on models,
     such as import/export from/to json, csv, xlsx etc.
@@ -82,7 +92,11 @@ class BulkManager(Manager):
         return BulkQuerySet(self.model, using=self._db)
 
     def import_from_file(
-        self, file, headers_mapping: dict, ignore_errors=False
+        self,
+        file,
+        headers_mapping: dict[str, str],
+        ignore_errors=False,
+        virtual_fields: dict[str, VirtualField] = None,
     ) -> dict:
         """Create or update model instancies from an xlsx or csv file
 
@@ -95,7 +109,27 @@ class BulkManager(Manager):
          if True - the function tries to create or modificate all valid
          rows ignoring any errors,
          if False - no object is modified should a single error occur.
+          Also, InvalidDataError is raised.
 
+        virtual_fields: a mapping of virtual field names to VirtualField instances.
+
+        More on virtual fields:
+        you can define your custom fields which are not presented in the model.
+        In order to treat them right, you have to provide the virtual_fields arg
+        with VirtualField instances like this:
+
+        `
+        def virtual_field_setter(obj, val):
+            obj.real_field1, obj.real_field2 = val.split()
+        
+        model.objects.import_from_file(..., virtual_fields={
+            "my_virtual_field": VirtualField(
+                setter=virtual_field_setter,
+                real_fields=['real_field1', 'real_field2"]
+            )
+        })
+        `  
+        
         If id is not provided in a row, a new instance is assumed,
         if id is present, this entry is updated.
 
@@ -113,6 +147,7 @@ class BulkManager(Manager):
             ...
             MyModel.objects.import_from_file(file, {"name": "имя"...})
         """
+        virtual_fields = virtual_fields or {}
 
         file_reader = dict_readers.factory.get(file)
         pk_field_name = self.model._meta.pk.name  # primary key field name
@@ -122,11 +157,13 @@ class BulkManager(Manager):
         pk_col_name = headers_mapping.get(pk_field_name, pk_field_name)
         # the name of the primary key column in the file
 
-        modified_fields = {
-            k
-            for k, v in headers_mapping.items()
-            if v in file_reader.fieldnames and k != pk_field_name
-        }
+        modified_fields = set()
+        for field, column in headers_mapping.items():
+            if column in file_reader.fieldnames and field != pk_field_name:
+                if field in virtual_fields:
+                    modified_fields.update(virtual_fields[field].real_fields)
+                else:
+                    modified_fields.add(field)
 
         excluded_fields = all_fields - modified_fields
 
@@ -141,9 +178,12 @@ class BulkManager(Manager):
 
             obj_modified = False
             for field, col_name in headers_mapping.items():
+                # if this column is present in the file
                 if (val := row.get(col_name)) is not None:
-                    # if this column is present in the file
-                    setattr(obj, field, val)
+                    if field in virtual_fields:
+                        virtual_fields[field].setter(obj, val)
+                    else:
+                        setattr(obj, field, val)
                     obj_modified = True
 
             if not obj_modified:
@@ -178,7 +218,7 @@ class BulkManager(Manager):
                 invalid_objs[row_num] = "; ".join(message)
 
         if invalid_objs and not ignore_errors:
-            return {"created": 0, "updated": 0, "invalid": invalid_objs}
+            raise InvalidDataError(invalid_objs)
 
         created = updated = 0
         try:
@@ -194,7 +234,7 @@ class BulkManager(Manager):
         except ValueError:
             raise BadFileError
 
-        return {"created": created, "updated": updated, "invalid": invalid_objs}
+        return {"created": created, "updated": updated}
 
     def export_to_file(self, *args, **kwargs):
         """See BulkQuerySet.export_to_file"""

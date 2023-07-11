@@ -1,12 +1,11 @@
 from datetime import datetime
 
-from django.contrib.admin import site as admin_site
 from django.core.exceptions import ImproperlyConfigured
 from django.http import FileResponse
 from django.views import View
 from django.views.generic.edit import FormView
 
-from importExport import BadFileError
+from importExport import BadFileError, InvalidDataError
 from utils.views import CustomAdminViewMixin
 
 from .forms import ImportForm
@@ -26,9 +25,14 @@ class ImportView(CustomAdminViewMixin, FormView):
     headers_mapping (dict): a mapping of model fields
         to column headers (custom column names);
 
-    required_fields (list): a list of fields required to be filled;
+    virtual_fields: a mapping of virtual field names to VirtualField instances.
 
-    page_title: html title to be set on the import page
+    ignore_errors: whether row-level errors should be silenced,
+
+    title: html title to be set on the import page
+
+    For more information on some properties,
+    check importExport.__init__.BulkManager.import_from_file.
 
     The behaviour of importing is:
     if id is not provided in a row, a new instance is CREATED,
@@ -45,7 +49,9 @@ class ImportView(CustomAdminViewMixin, FormView):
     form_class = ImportForm
     model = None
     headers_mapping = None
-    page_title = None
+    virtual_fields = None
+    ignore_errors = False
+    title = None
 
     def form_valid(self, form):
         try:
@@ -55,6 +61,8 @@ class ImportView(CustomAdminViewMixin, FormView):
             result = self.model.objects.import_from_file(
                 self.request.FILES["file"],
                 self.headers_mapping,
+                self.ignore_errors,
+                self.virtual_fields,
             )
 
         except AssertionError:
@@ -69,6 +77,8 @@ class ImportView(CustomAdminViewMixin, FormView):
             )
         except BadFileError:
             context = self.get_context_data(bad_format=True)
+        except InvalidDataError as e:
+            context = self.get_context_data(invalid=e.invalid_objs)
         else:
             context = self.get_context_data(**result)
 
