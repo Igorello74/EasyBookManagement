@@ -34,7 +34,8 @@ class ReaderImportView(ImportView):
         "second_lang": "язык 2",
         "role": "роль",
     }
-    page_title = "Добавить читателей из файла"
+    title = "Добавить читателей из файла"
+    allow_update = False
 
 
 @method_decorator(

@@ -112,7 +112,7 @@ class GroupFilter(admin.SimpleListFilter):
                 "query_string": changelist.get_query_string(
                     {self.parameter_name: lookup}
                 ),
-                "display": num,
+                "display": f"{num} классы",
                 "sub_choices": sub_choices,
             }
 

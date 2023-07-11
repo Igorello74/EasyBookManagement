@@ -75,21 +75,12 @@ class ImportView(CustomAdminViewMixin, FormView):
         return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if not self.page_title:
-            self.page_title = (
+        if not self.title:
+            self.title = (
                 f"Импортировать {self.model._meta.verbose_name.title()}"
             )
+        context = super().get_context_data(**kwargs)
 
-        context.update(
-            {
-                "form": ImportForm,
-                "title": self.page_title,
-                "is_nav_sidebar_enabled": True,
-                "available_apps": admin_site.get_app_list(self.request),
-                "view_name": self.page_title
-            }
-        )
         return context
 
 

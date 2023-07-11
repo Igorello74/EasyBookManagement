@@ -19,8 +19,9 @@ class CustomAdminViewMixin(ContextMixin):
     Properties you should set (at inheriting):
     - template_name - name of your template to use while rendering
     - model - the model your view deals with (it's required for breadcrumbs)
-    - view_name - name of the current view (used in breadcrumbs as well)
-    - title - title of the html page (defaults to view_name)
+    - title - title of the html page
+    - view_name - name of the current view
+      (used in breadcrumbs as well; defaults to the value of title)
     - has_view_permision - whether this user has the view permission
       for this model (defaults to True). Most likely he has, so you
       don't need to set this attribute explicitly.
@@ -32,8 +33,8 @@ class CustomAdminViewMixin(ContextMixin):
 
     template_name = "utils/custom_admin_view.html"
     model = None
-    view_name = "Custom view"
     title = None
+    view_name = None
     has_view_permission = True
 
     def get_context_data(self, **kwargs):
@@ -46,9 +47,9 @@ class CustomAdminViewMixin(ContextMixin):
         context.update(
             {
                 "opts": self.model._meta,
-                "view_name": self.view_name,
+                "view_name": self.view_name or self.title,
                 "has_view_permission": self.has_view_permission,
-                "title": self.title or self.view_name,
+                "title": self.title,
             }
         )
 
