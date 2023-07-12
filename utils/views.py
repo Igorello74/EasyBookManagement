@@ -1,5 +1,6 @@
-from django.views.generic.base import ContextMixin
+from django.contrib.admin import site as admin_site
 from django.core.exceptions import ImproperlyConfigured
+from django.views.generic.base import ContextMixin
 
 
 class CustomAdminViewMixin(ContextMixin):
@@ -25,7 +26,7 @@ class CustomAdminViewMixin(ContextMixin):
     - has_view_permision - whether this user has the view permission
       for this model (defaults to True). Most likely he has, so you
       don't need to set this attribute explicitly.
-    
+
     You should inherit the utils/custom_admin_view.html template
     (use the "content" block to show the content, obviously)
 
@@ -36,6 +37,11 @@ class CustomAdminViewMixin(ContextMixin):
     title = None
     view_name = None
     has_view_permission = True
+
+    def dispatch(self, request, *args, **kwargs):
+        self.extra_context = self.extra_context or {}
+        self.extra_context.update(admin_site.each_context(request))
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         if self.model is None:
