@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'readersRecords',
     'purchaseRecords',
     'importExport',
-    'utils'
+    'utils',
+    'operationsLog'
 ]
 
 MIDDLEWARE = [
@@ -129,7 +130,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
+    BASE_DIR / "static",
 ]
 
 # Default primary key field type
@@ -141,6 +142,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 READERSRECORDS_MAX_GRADE = 11  # specify the last class in the school
 # (like people usually graduate after the 11-th class in Russia)
+
+BACKUPS_DIR = BASE_DIR / "backups"
 
 try:
     from local_settings import *
