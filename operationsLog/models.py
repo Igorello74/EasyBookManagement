@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.forms import ModelForm
 
 
 class UnicodeJSONEncoder(DjangoJSONEncoder):
@@ -14,44 +15,40 @@ class UnicodeJSONEncoder(DjangoJSONEncoder):
         super().__init__(*args, **kwargs)
 
 
-def find_different_fields(obj1: models.Model, obj2: models.Model) -> dict:
-    difference = {}
-    if not type(obj1) is not type(obj2):
-        raise RuntimeError(
-            "Can't compare instances of different models "
-            f"({type(obj1)} and {type(obj2)})"
-        )
-
-    for field in obj1._meta.get_fields(include_hidden=False):
-        val1, val2 = getattr(obj1, field.name), getattr(obj2, field.name)
-        many = False
-        if field.is_relation:
-            if field.many_to_many or field.one_to_many:
-                val1 = list(val1.values_list("pk", flat=True))
-                val2 = list(val2.values_list("pk", flat=True))
-                # because two objects may have same items
-                # in different order, we need to compare sets
-                if set(val1) != set(val2):
-                    difference[field.name] = (val1, val2)
-                    continue
-
-            if field.many_to_one or field.one_to_one:
-                val1 = val1.pk
-                val2 = val2.pk
-        if val1 != val2:
-            difference[field.name] = (val1, val2)
-
-    return difference
-
-
 def model_to_dict(obj: models.Model) -> dict:
     opts = obj._meta
     data = {}
     for f in chain(opts.concrete_fields, opts.private_fields):
         data[f.name] = f.value_from_object(obj)
     for f in opts.many_to_many:
-        data[f.name] = [i.id for i in f.value_from_object(obj)]
+        data[f.name] = sorted([i.pk for i in f.value_from_object(obj)])
     return data
+
+
+def modelform_to_dict(form: ModelForm):
+    opts = form._meta.model._meta
+    data = {}
+    cleaned_data = form.cleaned_data
+
+    for f in chain(opts.concrete_fields, opts.private_fields):
+        if f.name in cleaned_data:
+            data[f.name] = cleaned_data[f.name]
+    for f in opts.many_to_many:
+        if f.name in cleaned_data:
+            data[f.name] = sorted([i.pk for i in cleaned_data[f.name]])
+    return data
+
+
+def compare_dicts_by_keys(d1: dict, d2: dict, skip_missing_keys=True) -> dict:
+    difference = {}
+
+    for field, val1 in d1.items():
+        if field not in d2:
+            continue
+        val2 = d2[field]
+        if val1 != val2:
+            difference[field] = (val1, val2)
+    return difference
 
 
 class LogRecordManager(models.Manager):
@@ -80,10 +77,16 @@ class LogRecordManager(models.Manager):
             LogRecord.Operation.CREATE, obj, user, reason
         )
 
-    def log_update(self, obj: models.Model, user=None, reason: str = None):
+    def log_update(
+        self, obj: models.Model, form, user=None, reason: str = None
+    ):
         # you need to call this method before having saved the object to db
         obj_init = type(obj).objects.get(pk=obj.pk)
-        details = {"field_changes": find_different_fields(obj_init, obj)}
+        details = {
+            "field_changes": compare_dicts_by_keys(
+                model_to_dict(obj_init), modelform_to_dict(form)
+            )
+        }
         return self._log_operation(
             LogRecord.Operation.UPDATE, obj, user, reason, details
         )
