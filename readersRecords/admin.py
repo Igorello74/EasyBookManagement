@@ -4,6 +4,7 @@ from django.db.models import Count
 from django.db.models.functions import Concat
 from django.urls import reverse_lazy
 
+from operationsLog.admin import LoggedModelAdmin
 from readersRecords.admin_filters import GroupFilter
 from readersRecords.forms import ReaderAdminForm
 from readersRecords.models import Reader
@@ -23,7 +24,7 @@ def change_group_action(modeladmin, request, queryset):
 
 
 @admin.register(Reader)
-class ReaderAdmin(ModelAdminWithTools):
+class ReaderAdmin(ModelAdminWithTools, LoggedModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.annotate(Count("books"))

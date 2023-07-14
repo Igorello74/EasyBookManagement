@@ -39,7 +39,7 @@ def modelform_to_dict(form: ModelForm):
     return data
 
 
-def compare_dicts_by_keys(d1: dict, d2: dict, skip_missing_keys=True) -> dict:
+def compare_dicts_by_keys(d1: dict, d2: dict) -> dict:
     difference = {}
 
     for field, val1 in d1.items():
@@ -82,13 +82,18 @@ class LogRecordManager(models.Manager):
     ):
         # you need to call this method before having saved the object to db
         obj_init = type(obj).objects.get(pk=obj.pk)
-        details = {
-            "field_changes": compare_dicts_by_keys(
-                model_to_dict(obj_init), modelform_to_dict(form)
-            )
-        }
+        difference = compare_dicts_by_keys(
+            model_to_dict(obj_init), modelform_to_dict(form)
+        )
+        if not difference:
+            return
+
         return self._log_operation(
-            LogRecord.Operation.UPDATE, obj, user, reason, details
+            LogRecord.Operation.UPDATE,
+            obj,
+            user,
+            reason,
+            {"field_changes": difference},
         )
 
     def log_delete(self, obj: models.Model, user=None, reason: str = None):
