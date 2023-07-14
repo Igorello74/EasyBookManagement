@@ -1,6 +1,6 @@
-from collections.abc import Callable
 from itertools import chain
-from typing import Any
+from typing import Collection
+
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
@@ -59,7 +59,7 @@ class LogRecordManager(models.Manager):
         self,
         operation: str,
         obj: models.Model,
-        user,
+        user=None,
         reason: str = None,
         details: dict = None,
     ) -> "LogRecord":
@@ -75,12 +75,12 @@ class LogRecordManager(models.Manager):
             details=details,
         )
 
-    def log_create(self, obj: models.Model, user, reason: str = None):
+    def log_create(self, obj: models.Model, user=None, reason: str = None):
         return self._log_operation(
             LogRecord.Operation.CREATE, obj, user, reason
         )
 
-    def log_update(self, obj: models.Model, user, reason: str = None):
+    def log_update(self, obj: models.Model, user=None, reason: str = None):
         # you need to call this method before having saved the object to db
         obj_init = type(obj).objects.get(pk=obj.pk)
         details = {"field_changes": find_different_fields(obj_init, obj)}
@@ -88,7 +88,7 @@ class LogRecordManager(models.Manager):
             LogRecord.Operation.UPDATE, obj, user, reason, details
         )
 
-    def log_delete(self, obj: models.Model, user, reason: str = None):
+    def log_delete(self, obj: models.Model, user=None, reason: str = None):
         return self._log_operation(
             LogRecord.Operation.DELETE,
             obj,
@@ -100,8 +100,8 @@ class LogRecordManager(models.Manager):
     def _log_bulk_operation(
         self,
         operation: str,
-        objs: list[models.Model],
-        user,
+        objs: Collection[models.Model],
+        user=None,
         reason: str = None,
         details: dict = None,
     ) -> "LogRecord":
@@ -118,7 +118,7 @@ class LogRecordManager(models.Manager):
         )
 
     def log_bulk_create(
-        self, objs: list[models.Model], user, reason: str = None
+        self, objs: Collection[models.Model], user=None, reason: str = None
     ):
         self._log_bulk_operation(
             LogRecord.Operation.BULK_CREATE, objs, user, reason
@@ -126,8 +126,8 @@ class LogRecordManager(models.Manager):
 
     def log_bulk_update(
         self,
-        objs: list[models.Model],
-        user,
+        objs: Collection[models.Model],
+        user=None,
         reason: str = None,
         modified_fields: list[str] = None,
     ):
@@ -139,7 +139,7 @@ class LogRecordManager(models.Manager):
         )
 
     def log_bulk_delete(
-        self, objs: list[models.Model], user, reason: str = None
+        self, objs: Collection[models.Model], user=None, reason: str = None
     ):
         self._log_bulk_operation(
             LogRecord.Operation.BULK_DELETE, objs, user, reason
@@ -171,6 +171,7 @@ class LogRecord(models.Model):
         models.CASCADE,
         verbose_name="пользователь",
         editable=False,
+        null=True,
     )
 
     obj_ids = ArrayField(
