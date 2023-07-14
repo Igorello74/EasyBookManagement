@@ -21,7 +21,6 @@ class GroupFilter(admin.SimpleListFilter):
             groups.setdefault(num, []).append(letter)
         self.groups = groups
 
-        print(groups)
         return [...]
 
     def queryset(self, request, queryset):
