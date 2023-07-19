@@ -7,6 +7,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.forms import ModelForm
+from operationsLog import backup
 
 
 class UnicodeJSONEncoder(DjangoJSONEncoder):
@@ -113,6 +114,7 @@ class LogRecordManager(models.Manager):
         user=None,
         reason: str = None,
         details: dict = None,
+        create_backup=False,
     ) -> "LogRecord":
         details = details or {}
         if reason:
@@ -122,18 +124,29 @@ class LogRecordManager(models.Manager):
         except Exception:
             pass
 
+        backup_file = ""
+        if create_backup:
+            backup_file = backup.create_backup()
+
         return self.create(
             operation=operation,
             user=user,
             obj_ids=[i.pk for i in objs],
             content_type=ContentType.objects.get_for_model(objs[0]),
             details=details,
+            backup_file=backup_file,
         )
 
     def log_bulk_create(
         self, objs: Collection[models.Model], user=None, reason: str = None
     ):
-        self._log_bulk_operation(LogRecord.Operation.BULK_CREATE, objs, user, reason)
+        self._log_bulk_operation(
+            LogRecord.Operation.BULK_CREATE,
+            objs,
+            user,
+            reason,
+            create_backup=True,
+        )
 
     def log_bulk_update(
         self,
@@ -146,13 +159,27 @@ class LogRecordManager(models.Manager):
         if modified_fields:
             details["modified_fields"] = modified_fields
         self._log_bulk_operation(
-            LogRecord.Operation.BULK_UPDATE, objs, user, reason, details
+            LogRecord.Operation.BULK_UPDATE,
+            objs,
+            user,
+            reason,
+            details,
+            create_backup=True,
         )
 
     def log_bulk_delete(
-        self, objs: Collection[models.Model], user=None, reason: str = None
+        self,
+        objs: Collection[models.Model],
+        user=None,
+        reason: str = None,
     ):
-        self._log_bulk_operation(LogRecord.Operation.BULK_DELETE, objs, user, reason)
+        self._log_bulk_operation(
+            LogRecord.Operation.BULK_DELETE,
+            objs,
+            user,
+            reason,
+            create_backup=True,
+        )
 
 
 class LogRecord(models.Model):
