@@ -16,6 +16,7 @@ from importExport import (
     dict_readers,
     dict_writers,
 )
+from operationsLog.models import LogRecord
 
 
 def export_queryset_to_file(
@@ -216,5 +217,12 @@ def import_from_file(
                 updated_count = model.objects.bulk_update(updated_objs, modified_fields)
     except ValueError:
         raise BadFileError
+    else:
+        if created_count:
+            LogRecord.objects.log_bulk_create(created_objs, user, "импорт из файла")
+        if updated_count:
+            LogRecord.objects.log_bulk_update(
+                updated_objs, user, "импорт из файла", modified_fields
+            )
 
     return {"created": created_count, "updated": updated_count}
