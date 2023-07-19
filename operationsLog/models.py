@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Collection
+from typing import Collection, Sequence
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -79,7 +79,7 @@ class LogRecordManager(models.Manager):
         )
 
     def log_create(self, obj: models.Model, user=None, reason: str = None):
-        return self._log_operation(LogRecord.Operation.CREATE, obj, user, reason)
+        return self._log_operation(str(LogRecord.Operation.CREATE), obj, user, reason)
 
     def log_update(self, obj: models.Model, form, user=None, reason: str = None):
         # you need to call this method before having saved the object to db
@@ -91,7 +91,7 @@ class LogRecordManager(models.Manager):
             return
 
         return self._log_operation(
-            LogRecord.Operation.UPDATE,
+            str(LogRecord.Operation.UPDATE),
             obj,
             user,
             reason,
@@ -100,7 +100,7 @@ class LogRecordManager(models.Manager):
 
     def log_delete(self, obj: models.Model, user=None, reason: str = None):
         return self._log_operation(
-            LogRecord.Operation.DELETE,
+            str(LogRecord.Operation.DELETE),
             obj,
             user,
             reason,
@@ -110,7 +110,7 @@ class LogRecordManager(models.Manager):
     def _log_bulk_operation(
         self,
         operation: str,
-        objs: Collection[models.Model],
+        objs: Sequence[models.Model],
         user=None,
         reason: str = None,
         details: dict = None,
@@ -126,7 +126,7 @@ class LogRecordManager(models.Manager):
 
         backup_file = ""
         if create_backup:
-            backup_file = backup.create_backup()
+            backup_file = str(backup.create_backup())
 
         return self.create(
             operation=operation,
@@ -138,10 +138,10 @@ class LogRecordManager(models.Manager):
         )
 
     def log_bulk_create(
-        self, objs: Collection[models.Model], user=None, reason: str = None
+        self, objs: Sequence[models.Model], user=None, reason: str = None
     ):
         self._log_bulk_operation(
-            LogRecord.Operation.BULK_CREATE,
+            str(LogRecord.Operation.BULK_CREATE),
             objs,
             user,
             reason,
@@ -150,16 +150,16 @@ class LogRecordManager(models.Manager):
 
     def log_bulk_update(
         self,
-        objs: Collection[models.Model],
+        objs: Sequence[models.Model],
         user=None,
         reason: str = None,
-        modified_fields: list[str] = None,
+        modified_fields: Collection[str] = None,
     ):
         details = {}
         if modified_fields:
-            details["modified_fields"] = modified_fields
+            details["modified_fields"] = list(modified_fields)
         self._log_bulk_operation(
-            LogRecord.Operation.BULK_UPDATE,
+            str(LogRecord.Operation.BULK_UPDATE),
             objs,
             user,
             reason,
@@ -169,12 +169,12 @@ class LogRecordManager(models.Manager):
 
     def log_bulk_delete(
         self,
-        objs: Collection[models.Model],
+        objs: Sequence[models.Model],
         user=None,
         reason: str = None,
     ):
         self._log_bulk_operation(
-            LogRecord.Operation.BULK_DELETE,
+            str(LogRecord.Operation.BULK_DELETE),
             objs,
             user,
             reason,
