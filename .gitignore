@@ -283,3 +283,4 @@ $RECYCLE.BIN/
 jsconfig.json
 dumps/*
 data/*
+**/backups/

@@ -143,7 +143,11 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 READERSRECORDS_MAX_GRADE = 11  # specify the last class in the school
 # (like people usually graduate after the 11-th class in Russia)
 
-BACKUPS_DIR = BASE_DIR / "backups"
+BACKUP_DIR = BASE_DIR / "backups"
+BACKUP_APPS = ["readersRecords", "booksRecords", "purchaseRecords"]
+BACKUP_FORMAT = "json"  # choices are: xml, json, jsonl, yaml
+BACKUP_COMPRESSION = "bz2"
+# choices are: bz2, gz, lzma, xz, or leave blank to use none
 
 try:
     from local_settings import *

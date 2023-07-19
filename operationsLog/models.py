@@ -215,7 +215,7 @@ class LogRecord(models.Model):
 
     backup_file = models.FilePathField(
         "резервная копия",
-        path=settings.BACKUPS_DIR,
+        path=settings.BACKUP_DIR,
         allow_files=False,
         allow_folders=True,
         blank=True,
