@@ -27,7 +27,7 @@ def generate_backup_filename(backup_dir: Path, format="json", compression="") ->
     t = datetime.now()
     dir = backup_dir / f"{t.year}/{t.month}"
     dir.mkdir(parents=True, exist_ok=True)
-    filename = f'{t.isoformat("T", "minutes")}.{format}'
+    filename = f'{t.isoformat("T", "seconds")}.{format}'
     if compression:
         filename = f"{filename}.{compression}"
     path = dir / filename
