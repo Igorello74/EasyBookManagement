@@ -54,22 +54,23 @@ class ImportView(CustomAdminViewMixin, FormView):
     title = None
 
     def form_valid(self, form):
-        try:
-            assert self.model and self.headers_mapping
-            # check if the subclass is properly configured
+        if not (self.model and self.headers_mapping):
+            raise ImproperlyConfigured(
+                'You must set the "model" and "headers_mapping" attributes in the '
+                "subclass definition"
+            )
 
+        try:
             result = self.model.objects.import_from_file(
                 self.request.FILES["file"],
                 self.headers_mapping,
                 self.ignore_errors,
                 self.virtual_fields,
             )
+            context = self.get_context_data(**result)
 
-        except AssertionError:
-            raise ImproperlyConfigured(
-                "You must set model and" " headers_mapping in the subclass definition"
-            )
         except AttributeError:
+            # if the model manager doesn't provide the import_from_file function
             raise ImproperlyConfigured(
                 "You can only use ImportView with models whose default "
                 "manager (objects) is an instance of BulkManager"
@@ -78,8 +79,6 @@ class ImportView(CustomAdminViewMixin, FormView):
             context = self.get_context_data(bad_format=True)
         except InvalidDataError as e:
             context = self.get_context_data(invalid=e.invalid_objs)
-        else:
-            context = self.get_context_data(**result)
 
         return self.render_to_response(context)
 
@@ -87,14 +86,13 @@ class ImportView(CustomAdminViewMixin, FormView):
         if not self.title:
             self.title = f"Импортировать {self.model._meta.verbose_name.title()}"
         context = super().get_context_data(**kwargs)
-
         return context
 
 
 class ExportView(View):
     model = None
     headers_mapping = None
-    related_fields = set()
+    related_fields: set[str] = set()
     file_format = ".xlsx"
 
     @staticmethod
