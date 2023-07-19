@@ -64,6 +64,11 @@ class LogRecordManager(models.Manager):
         if reason:
             details["reason"] = reason
 
+        try:
+            details["obj_repr"] = str(obj)
+        except Exception:
+            pass
+
         return self.create(
             operation=operation,
             user=user,
@@ -81,9 +86,9 @@ class LogRecordManager(models.Manager):
         self, obj: models.Model, form, user=None, reason: str = None
     ):
         # you need to call this method before having saved the object to db
-        obj_init = type(obj).objects.get(pk=obj.pk)
+        original_obj = type(obj).objects.get(pk=obj.pk)
         difference = compare_dicts_by_keys(
-            model_to_dict(obj_init), modelform_to_dict(form)
+            model_to_dict(original_obj), modelform_to_dict(form)
         )
         if not difference:
             return
@@ -116,6 +121,11 @@ class LogRecordManager(models.Manager):
         details = details or {}
         if reason:
             details["reason"] = reason
+        try:
+            details["objs_repr"] = [str(i) for i in objs]
+        except Exception:
+            pass
+
 
         return self.create(
             operation=operation,
