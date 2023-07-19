@@ -4,7 +4,6 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 
-from importExport import BulkManager
 
 GROUP_PATTERN = re.compile(r"(\d+).*?([а-яёa-z]+)", re.I)
 # a regexp pattern matching any string that resembles a group.
@@ -109,8 +108,6 @@ class Reader(models.Model):
         if self.role == self.STUDENT and not (self.group_num or self.group_letter):
             raise ValidationError("Для учеников обязательно указывать класс.")
         return super().clean()
-
-    objects = BulkManager()
 
     @staticmethod
     def format_group(group_num, group_letter):

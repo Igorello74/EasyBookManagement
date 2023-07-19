@@ -9,12 +9,9 @@ import pathlib
 from io import TextIOWrapper
 
 from openpyxl import load_workbook
+from importExport import BadFileError
 
 from utils import ObjectFactory
-
-
-class BadFileError(Exception):
-    ...
 
 
 class XlsxDictReader:

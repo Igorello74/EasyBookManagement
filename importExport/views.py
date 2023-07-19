@@ -1,11 +1,12 @@
 from datetime import datetime
 
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import QuerySet
 from django.http import FileResponse
 from django.views import View
 from django.views.generic.edit import FormView
 
-from importExport import BadFileError, InvalidDataError
+from importExport import BadFileError, InvalidDataError, base
 from utils.views import CustomAdminViewMixin
 
 from .forms import ImportForm
@@ -16,8 +17,7 @@ class ImportView(CustomAdminViewMixin, FormView):
 
     You have to set some attributes when subclassing this view:
 
-    model: the model object with default manager (objects) set to
-        an instance of the BulkManager;
+    model: the model subclass;
 
     template_name: name of the template to use when rendering this view
         (you can extend "importExport/import.html");
@@ -32,7 +32,7 @@ class ImportView(CustomAdminViewMixin, FormView):
     title: html title to be set on the import page
 
     For more information on some properties,
-    check importExport.__init__.BulkManager.import_from_file.
+    check importExport.base.import_from_file.
 
     The behaviour of importing is:
     if id is not provided in a row, a new instance is CREATED,
@@ -61,20 +61,16 @@ class ImportView(CustomAdminViewMixin, FormView):
             )
 
         try:
-            result = self.model.objects.import_from_file(
+            result = base.import_from_file(
+                self.model,
                 self.request.FILES["file"],
                 self.headers_mapping,
                 self.ignore_errors,
                 self.virtual_fields,
+                self.request.user,
             )
             context = self.get_context_data(**result)
 
-        except AttributeError:
-            # if the model manager doesn't provide the import_from_file function
-            raise ImproperlyConfigured(
-                "You can only use ImportView with models whose default "
-                "manager (objects) is an instance of BulkManager"
-            )
         except BadFileError:
             context = self.get_context_data(bad_format=True)
         except InvalidDataError as e:
@@ -96,7 +92,7 @@ class ExportView(View):
     file_format = ".xlsx"
 
     @staticmethod
-    def format_related(qs) -> str:
+    def format_related(qs: QuerySet) -> str:
         raise NotImplementedError(
             "format_related method has to be implemented in the subclass"
         )
@@ -108,7 +104,9 @@ class ExportView(View):
     def get(self, request, queryset=None):
         if queryset is None:
             queryset = self.model.objects.all()
-        file_path = queryset.export_to_file(
+
+        file_path = base.export_queryset_to_file(
+            queryset,
             self.file_format,
             self.headers_mapping,
             self.related_fields,
