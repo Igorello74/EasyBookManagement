@@ -78,13 +78,9 @@ class LogRecordManager(models.Manager):
         )
 
     def log_create(self, obj: models.Model, user=None, reason: str = None):
-        return self._log_operation(
-            LogRecord.Operation.CREATE, obj, user, reason
-        )
+        return self._log_operation(LogRecord.Operation.CREATE, obj, user, reason)
 
-    def log_update(
-        self, obj: models.Model, form, user=None, reason: str = None
-    ):
+    def log_update(self, obj: models.Model, form, user=None, reason: str = None):
         # you need to call this method before having saved the object to db
         original_obj = type(obj).objects.get(pk=obj.pk)
         difference = compare_dicts_by_keys(
@@ -126,7 +122,6 @@ class LogRecordManager(models.Manager):
         except Exception:
             pass
 
-
         return self.create(
             operation=operation,
             user=user,
@@ -138,9 +133,7 @@ class LogRecordManager(models.Manager):
     def log_bulk_create(
         self, objs: Collection[models.Model], user=None, reason: str = None
     ):
-        self._log_bulk_operation(
-            LogRecord.Operation.BULK_CREATE, objs, user, reason
-        )
+        self._log_bulk_operation(LogRecord.Operation.BULK_CREATE, objs, user, reason)
 
     def log_bulk_update(
         self,
@@ -159,9 +152,7 @@ class LogRecordManager(models.Manager):
     def log_bulk_delete(
         self, objs: Collection[models.Model], user=None, reason: str = None
     ):
-        self._log_bulk_operation(
-            LogRecord.Operation.BULK_DELETE, objs, user, reason
-        )
+        self._log_bulk_operation(LogRecord.Operation.BULK_DELETE, objs, user, reason)
 
 
 class LogRecord(models.Model):
@@ -174,9 +165,7 @@ class LogRecord(models.Model):
         BULK_DELETE = "BULK_DELETE", "массовое удаление"
         REVERT = "REVERT", "отмена действия"
 
-    datetime = models.DateTimeField(
-        "дата и время", auto_now_add=True, editable=False
-    )
+    datetime = models.DateTimeField("дата и время", auto_now_add=True, editable=False)
     operation = models.CharField(
         "тип действия",
         max_length=20,

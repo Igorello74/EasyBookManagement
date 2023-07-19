@@ -30,9 +30,7 @@ class LangField(models.CharField):
             return value
         try:
             value = str(value).lower()
-            value = self.langs_mapping.get(
-                re.search(r"\w", value).group(0), value
-            )
+            value = self.langs_mapping.get(re.search(r"\w", value).group(0), value)
         except Exception:
             value = ""
         return super().get_db_prep_save(value, connection)
@@ -108,9 +106,7 @@ class Reader(models.Model):
             return self.name
 
     def clean(self):
-        if self.role == self.STUDENT and not (
-            self.group_num or self.group_letter
-        ):
+        if self.role == self.STUDENT and not (self.group_num or self.group_letter):
             raise ValidationError("Для учеников обязательно указывать класс.")
         return super().clean()
 

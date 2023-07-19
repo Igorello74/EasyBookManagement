@@ -39,9 +39,7 @@ class ReaderAdmin(ModelAdminWithTools, LoggedModelAdmin):
         )
         return super().get_search_results(request, queryset, search_term)
 
-    @admin.display(
-        description="Количество взятых книг", ordering="books__count"
-    )
+    @admin.display(description="Количество взятых книг", ordering="books__count")
     def get_books_num(self):
         return self.books__count
 
@@ -72,9 +70,7 @@ class ReaderAdmin(ModelAdminWithTools, LoggedModelAdmin):
             },
         ),
     )
-    formfield_overrides = {
-        models.ManyToManyField: {"widget": ChoicesjsTextWidget}
-    }
+    formfield_overrides = {models.ManyToManyField: {"widget": ChoicesjsTextWidget}}
 
     list_filter = ("role", GroupFilter)
     list_per_page = 250

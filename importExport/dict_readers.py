@@ -89,9 +89,7 @@ class DictReaderFactory(ObjectFactory):
         try:
             return super().get(key=file_extension, f=file, **kwargs)
         except ValueError:
-            raise BadFileError(
-                f"We can't read that format yet: {file_extension}"
-            )
+            raise BadFileError(f"We can't read that format yet: {file_extension}")
         except Exception:
             raise BadFileError("Invalid file")
 

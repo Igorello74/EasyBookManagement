@@ -42,4 +42,3 @@ class LoggedModelAdmin(ModelAdminWithoutLogging):
         else:
             LogRecord.objects.log_bulk_delete(queryset, request.user)
         return super().delete_queryset(request, queryset)
-

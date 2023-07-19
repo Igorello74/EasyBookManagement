@@ -121,15 +121,15 @@ class BulkManager(Manager):
         `
         def virtual_field_setter(obj, val):
             obj.real_field1, obj.real_field2 = val.split()
-        
+
         model.objects.import_from_file(..., virtual_fields={
             "my_virtual_field": VirtualField(
                 setter=virtual_field_setter,
                 real_fields=['real_field1', 'real_field2"]
             )
         })
-        `  
-        
+        `
+
         If id is not provided in a row, a new instance is assumed,
         if id is present, this entry is updated.
 
@@ -204,16 +204,11 @@ class BulkManager(Manager):
                 message = []
                 if d.get("__all__"):
                     message.append(
-                        " ".join(
-                            i.lower().removesuffix(".")
-                            for i in d.pop("__all__")
-                        )
+                        " ".join(i.lower().removesuffix(".") for i in d.pop("__all__"))
                     )
 
                 for field, reason in d.items():
-                    reason = ", ".join(
-                        i.lower().removesuffix(".") for i in reason
-                    )
+                    reason = ", ".join(i.lower().removesuffix(".") for i in reason)
                     message.append(f"{headers_mapping[field]} ({reason})")
                 invalid_objs[row_num] = "; ".join(message)
 
@@ -224,9 +219,7 @@ class BulkManager(Manager):
         try:
             with atomic():
                 if objs_to_create:
-                    created = len(
-                        self.model.objects.bulk_create(objs_to_create)
-                    )
+                    created = len(self.model.objects.bulk_create(objs_to_create))
                 if objs_to_update:
                     updated = self.model.objects.bulk_update(
                         objs_to_update, modified_fields

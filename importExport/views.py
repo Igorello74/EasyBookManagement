@@ -67,8 +67,7 @@ class ImportView(CustomAdminViewMixin, FormView):
 
         except AssertionError:
             raise ImproperlyConfigured(
-                "You must set model and"
-                " headers_mapping in the subclass definition"
+                "You must set model and" " headers_mapping in the subclass definition"
             )
         except AttributeError:
             raise ImproperlyConfigured(
@@ -86,9 +85,7 @@ class ImportView(CustomAdminViewMixin, FormView):
 
     def get_context_data(self, **kwargs):
         if not self.title:
-            self.title = (
-                f"Импортировать {self.model._meta.verbose_name.title()}"
-            )
+            self.title = f"Импортировать {self.model._meta.verbose_name.title()}"
         context = super().get_context_data(**kwargs)
 
         return context
@@ -108,9 +105,7 @@ class ExportView(View):
 
     def get_filename(self):
         model_name = self.model._meta.verbose_name.title()
-        return (
-            f"Экспорт {model_name} {datetime.now():%d-%m-%Y}{self.file_format}"
-        )
+        return f"Экспорт {model_name} {datetime.now():%d-%m-%Y}{self.file_format}"
 
     def get(self, request, queryset=None):
         if queryset is None:

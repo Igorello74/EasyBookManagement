@@ -39,9 +39,7 @@ class GroupFilter(admin.SimpleListFilter):
     def choices(self, changelist):
         yield {
             "selected": self.value() is None,
-            "query_string": changelist.get_query_string(
-                remove=[self.parameter_name]
-            ),
+            "query_string": changelist.get_query_string(remove=[self.parameter_name]),
             "display": "Все",
         }
         for num, letters_list in self.groups.items():

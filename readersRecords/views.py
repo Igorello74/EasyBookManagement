@@ -41,9 +41,7 @@ class ReaderImportView(ImportView):
     title = "Добавить читателей из файла"
     allow_update = False
     virtual_fields = {
-        "group": VirtualField(
-            reader_group_setter, ["group_num", "group_letter"]
-        )
+        "group": VirtualField(reader_group_setter, ["group_num", "group_letter"])
     }
 
 
@@ -103,9 +101,7 @@ class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
             return self.render_and_get_context({"students": queryset})
 
         else:
-            queryset = Reader.objects.filter(
-                id__in=request.POST.getlist("students")
-            )
+            queryset = Reader.objects.filter(id__in=request.POST.getlist("students"))
 
             if not request.POST.get("group"):
                 messages.error(
@@ -125,9 +121,7 @@ class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
 class UpdateStudentsGradeView(View):
     def get(self, request, *args, **kwargs):
         students = Reader.objects.filter(role=Reader.STUDENT)
-        graduating = students.filter(
-            group_num__gte=settings.READERSRECORDS_MAX_GRADE
-        )
+        graduating = students.filter(group_num__gte=settings.READERSRECORDS_MAX_GRADE)
         non_graduating = students.filter(
             group_num__lt=settings.READERSRECORDS_MAX_GRADE
         )

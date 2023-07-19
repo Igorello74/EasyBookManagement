@@ -23,9 +23,7 @@ def dump_apps_to_file(
     )
 
 
-def generate_backup_filename(
-    backup_dir: Path, format="json", compression=""
-) -> Path:
+def generate_backup_filename(backup_dir: Path, format="json", compression="") -> Path:
     t = datetime.now()
     dir = backup_dir / f"{t.year}/{t.month}"
     dir.mkdir(parents=True, exist_ok=True)
@@ -42,14 +40,12 @@ def create_backup() -> Path:
 
     Create a backup of all apps listed in settings.BACKUP_APPS
     in the settings.BACKUP_DIR directory using the settings.BACKUP_FORMAT
-    with the settings.BACKUP_COMPRESSION 
+    with the settings.BACKUP_COMPRESSION
     """
     filename = generate_backup_filename(
         settings.BACKUP_DIR,
         settings.BACKUP_FORMAT,
         settings.BACKUP_COMPRESSION,
     )
-    dump_apps_to_file(
-        filename, settings.BACKUP_APPS, format=settings.BACKUP_FORMAT
-    )
+    dump_apps_to_file(filename, settings.BACKUP_APPS, format=settings.BACKUP_FORMAT)
     return filename

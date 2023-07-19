@@ -24,7 +24,7 @@ admin.site.site_url = None
 admin.site.site_title = "EBM"
 admin.site.index_title = "Главная страница"
 urlpatterns = [
-    path('readersRecords/reader/', include(readersRecords.urls.admin_urlpatterns)),
-    path('', admin.site.urls),
-    path('books/', include(booksRecords.urls)),
+    path("readersRecords/reader/", include(readersRecords.urls.admin_urlpatterns)),
+    path("", admin.site.urls),
+    path("books/", include(booksRecords.urls)),
 ]
