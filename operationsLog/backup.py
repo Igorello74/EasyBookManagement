@@ -14,6 +14,11 @@ def dump_apps_to_file(
     exclude: Sequence[str] = (),
     format: str = "json",
 ):
+    try:
+        filename.resolve()
+    except AttributeError:
+        pass
+
     call_command(
         dumpdata.Command(),
         app_labels,
@@ -23,18 +28,23 @@ def dump_apps_to_file(
     )
 
 
-def generate_backup_filename(backup_dir: Path, format="json", compression="") -> Path:
+def generate_backup_filename(
+    backup_dir: Path, format="json", compression="", reason="auto"
+) -> Path:
     t = datetime.now()
-    dir = backup_dir / f"{t.year}/{t.month}"
+    dir = backup_dir / f"{t.year}/{t.month:02}"
     dir.mkdir(parents=True, exist_ok=True)
-    filename = f'{t.isoformat("T", "seconds")}.{format}'
+    filename = (
+        f"{t.year}-{t.month:02}-{t.day:02}T{t.hour:02}-{t.minute:02}-{t.second:02}"
+        f"__{reason}.{format}"
+    )
     if compression:
         filename = f"{filename}.{compression}"
     path = dir / filename
     return path.resolve()
 
 
-def create_backup() -> Path:
+def create_backup(reason="auto") -> Path:
     """
     Create a backup of the database
 
@@ -43,9 +53,7 @@ def create_backup() -> Path:
     with the settings.BACKUP_COMPRESSION
     """
     filename = generate_backup_filename(
-        settings.BACKUP_DIR,
-        settings.BACKUP_FORMAT,
-        settings.BACKUP_COMPRESSION,
+        settings.BACKUP_DIR, settings.BACKUP_FORMAT, settings.BACKUP_COMPRESSION, reason
     )
     dump_apps_to_file(filename, settings.BACKUP_APPS, format=settings.BACKUP_FORMAT)
     return filename

@@ -208,7 +208,7 @@ def import_from_file(
     if invalid_objs and not ignore_errors:
         raise InvalidDataError(invalid_objs)
 
-    backup_filename = str(create_backup())
+    backup_filename = str(create_backup("import-from-file"))
 
     created_count = updated_count = 0
     try:
