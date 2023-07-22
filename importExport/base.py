@@ -17,6 +17,7 @@ from importExport import (
     dict_writers,
 )
 from operationsLog.models import LogRecord
+from operationsLog.backup import create_backup
 
 
 def export_queryset_to_file(
@@ -207,6 +208,8 @@ def import_from_file(
     if invalid_objs and not ignore_errors:
         raise InvalidDataError(invalid_objs)
 
+    backup_filename = str(create_backup())
+
     created_count = updated_count = 0
     try:
         with atomic():
@@ -219,10 +222,10 @@ def import_from_file(
         raise BadFileError
     else:
         if created_count:
-            LogRecord.objects.log_bulk_create(created_objs, user, "импорт из файла")
+            LogRecord.objects.log_bulk_create(created_objs, user, "импорт из файла", backup_filename)
         if updated_count:
             LogRecord.objects.log_bulk_update(
-                updated_objs, user, "импорт из файла", modified_fields
+                updated_objs, user, "импорт из файла", modified_fields, backup_filename
             )
 
     return {"created": created_count, "updated": updated_count}

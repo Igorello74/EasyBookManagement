@@ -1,7 +1,5 @@
-from typing import Any
 from django.contrib import admin
-from django.contrib.admin.models import LogEntry
-from django.http.request import HttpRequest
+from operationsLog import backup
 
 from operationsLog.models import LogRecord
 
@@ -40,5 +38,8 @@ class LoggedModelAdmin(ModelAdminWithoutLogging):
         if queryset.count() == 1:
             LogRecord.objects.log_delete(queryset[0], request.user)
         else:
-            LogRecord.objects.log_bulk_delete(queryset, request.user)
+            backup_file = backup.create_backup()
+            LogRecord.objects.log_bulk_delete(
+                queryset, request.user, backup_file=backup_file
+            )
         return super().delete_queryset(request, queryset)
