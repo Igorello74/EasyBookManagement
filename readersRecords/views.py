@@ -14,6 +14,8 @@ from django.views.generic import TemplateView
 
 from importExport import VirtualField
 from importExport.views import ExportView, ImportView
+from operationsLog.backup import create_backup
+from operationsLog.models import LogRecord
 from utils.views import CustomAdminViewMixin
 
 from .models import Reader
@@ -110,6 +112,15 @@ class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
                 return self.render_and_get_context({"students": queryset})
 
             parsed = Reader._parse_group(request.POST["group"])
+
+            backup_filename = create_backup("change-group")
+            LogRecord.objects.log_bulk_update(
+                queryset,
+                request.user,
+                "изменение класса",
+                ["group_num", "group_letter"],
+                backup_filename,
+            )
             queryset.update(group_num=parsed.num, group_letter=parsed.letter)
             return redirect("admin:readersRecords_reader_changelist")
 
@@ -151,6 +162,23 @@ class UpdateStudentsGradeView(View):
                     "has_view_permission": True,
                     "graduating": graduating,
                 },
+            )
+
+        backup_filename = create_backup("update-grade")
+        if non_graduating:
+            LogRecord.objects.log_bulk_update(
+                non_graduating,
+                request.user,
+                "перевод учеников в следующий класс",
+                ["group_num"],
+                backup_filename,
+            )
+        if graduating:
+            LogRecord.objects.log_bulk_delete(
+                graduating,
+                request.user,
+                "выпуск учеников",
+                backup_filename,
             )
 
         with atomic():

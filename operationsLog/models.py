@@ -120,7 +120,7 @@ class LogRecordManager(models.Manager):
         if reason:
             details["reason"] = reason
         try:
-            details["objs_repr"] = [str(i) for i in objs]
+            details["objs_repr"] = {i.pk: str(i) for i in objs}
         except Exception:
             pass
 
