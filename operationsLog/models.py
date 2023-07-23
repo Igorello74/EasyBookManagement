@@ -7,7 +7,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.forms import ModelForm
-
+from django.utils.text import get_text_list
 
 
 class UnicodeJSONEncoder(DjangoJSONEncoder):
@@ -241,3 +241,33 @@ class LogRecord(models.Model):
     )
 
     objects = LogRecordManager()
+
+    def __str__(self):
+        model = self.content_type.model_class()
+        operation = self.get_operation_display().capitalize()
+
+        result = [f"{operation}:"]
+
+        if len(self.obj_ids) > 1:
+            result.extend(
+                (model._meta.verbose_name_plural, f"({len(self.obj_ids)} шт.)")
+            )
+        else:
+            result.append(model._meta.verbose_name)
+
+        if "obj_repr" in self.details:
+            result.append(f" {self.details['obj_repr']}")
+
+        if "field_changes" in self.details:
+            verbose_names = []
+            for field in self.details["field_changes"]:
+                try:
+                    verbose_names.append(getattr(model, field).field.verbose_name)
+                except AttributeError:
+                    verbose_names.append(field)
+            if len(verbose_names) == 1:
+                result.append(f'(изменено поле "{verbose_names[0]}")')
+            else:
+                result.append(f"(изменены {get_text_list(verbose_names, 'и')})")
+
+        return " ".join(result)

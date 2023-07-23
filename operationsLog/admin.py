@@ -43,3 +43,14 @@ class LoggedModelAdmin(ModelAdminWithoutLogging):
                 queryset, request.user, backup_file=backup_file
             )
         return super().delete_queryset(request, queryset)
+
+@admin.register(LogRecord)
+class LogRecordAdmin(ModelAdminWithoutLogging):
+    readonly_fields = [
+        "datetime",
+        "operation",
+        "user",
+        "content_type",
+        "backup_file",
+    ]
+
