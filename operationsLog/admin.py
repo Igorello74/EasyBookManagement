@@ -64,14 +64,39 @@ def join_obj_reprs(ids: list, model, sep=", ", empty_value="-"):
 class LogRecordAdmin(ModelAdminWithoutLogging):
     readonly_fields = [
         "datetime",
-        "operation",
+        "reason",
         "user",
         "content_type",
-        "backup_file",
-        "field_changes",
+        "is_backup_created"
     ]
 
-    @admin.display(description="Измененные поля")
+    conditional_fields = ["obj_repr", "field_changes", "objs_repr", "modified_fields"]
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request, obj))
+        if obj is not None:
+            for i in self.conditional_fields:
+                if obj.details.get(i):
+                    fields.append(i)
+            if not obj.details.get("reason"):
+                fields.remove("reason")
+        return fields
+
+    @admin.display(description="Резервная копия")
+    def is_backup_created(self, instance: LogRecord):
+        if instance.backup_file:
+            return "сохранена"
+        return "не сохранена"
+
+    @admin.display(description="Причина")
+    def reason(self, instance: LogRecord):
+        return instance.details["reason"]
+
+    @admin.display(description="Объект")
+    def obj_repr(self, instance: LogRecord):
+        return instance.details["obj_repr"]
+
+    @admin.display(description="Изменения")
     def field_changes(self, instance: LogRecord):
         if not instance.details.get("field_changes"):
             return "-"
@@ -94,3 +119,37 @@ class LogRecordAdmin(ModelAdminWithoutLogging):
             fields.append({"name": verbose_name, "old": old, "new": new})
 
         return render_to_string("operationsLog/field_changes.html", {"fields": fields})
+
+    @admin.display(description="Объекты")
+    def objs_repr(self, instance: LogRecord):
+        title = "Объекты"
+        if instance.operation == LogRecord.Operation.BULK_DELETE:
+            title = "Удаленные объекты"
+        elif instance.operation == LogRecord.Operation.BULK_UPDATE:
+            title = "Изменённые объекты"
+
+        expanded = True
+        objs_num = len(instance.details["objs_repr"])
+        if objs_num > 30:
+            expanded = False
+
+        return render_to_string(
+            "operationsLog/objs_repr.html",
+            {
+                "objs": instance.details["objs_repr"].values(),
+                "expanded": expanded,
+                "title": title,
+                "objs_num": objs_num,
+            },
+        )
+
+    @admin.display(description="Изменённые поля")
+    def modified_fields(self, instance: LogRecord):
+        opts = instance.content_type.model_class()._meta
+        results = []
+        for field_name in instance.details['modified_fields']:
+            try:
+                results.append(opts.get_field(field_name).verbose_name)
+            except:
+                results.append(field_name)
+        return ", ".join(results)
