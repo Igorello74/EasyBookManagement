@@ -271,3 +271,7 @@ class LogRecord(models.Model):
                 result.append(f"(изменены {get_text_list(verbose_names, 'и')})")
 
         return " ".join(result)
+
+    class Meta:
+        verbose_name = "запись журнала"
+        verbose_name_plural = "записи журнала"

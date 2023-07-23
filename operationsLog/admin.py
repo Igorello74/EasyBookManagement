@@ -47,7 +47,7 @@ class LoggedModelAdmin(ModelAdminWithoutLogging):
 
 
 def join_obj_reprs(ids: list, model, sep=", ", empty_value="-"):
-    """Join str-representations of objects with ids of the given model.
+    """Join str-representations of objects (with ids) of the given model.
 
     If these objects no more exist, join ids instead.
     """
@@ -57,7 +57,8 @@ def join_obj_reprs(ids: list, model, sep=", ", empty_value="-"):
         if not qs:
             qs = ids
         return ", ".join(str(i) for i in qs)
-    return "-"
+    return empty_value
+
 
 
 @admin.register(LogRecord)
@@ -67,10 +68,21 @@ class LogRecordAdmin(ModelAdminWithoutLogging):
         "reason",
         "user",
         "content_type",
-        "is_backup_created"
+        "is_backup_created",
     ]
 
     conditional_fields = ["obj_repr", "field_changes", "objs_repr", "modified_fields"]
+
+    date_hierarchy = "datetime"
+    list_display = ["__str__", "datetime"]
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["title"] = "Запись журнала"
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def has_add_permission(self, request):
+        return False
 
     def get_readonly_fields(self, request, obj=None):
         fields = list(super().get_readonly_fields(request, obj))
@@ -147,7 +159,7 @@ class LogRecordAdmin(ModelAdminWithoutLogging):
     def modified_fields(self, instance: LogRecord):
         opts = instance.content_type.model_class()._meta
         results = []
-        for field_name in instance.details['modified_fields']:
+        for field_name in instance.details["modified_fields"]:
             try:
                 results.append(opts.get_field(field_name).verbose_name)
             except:
