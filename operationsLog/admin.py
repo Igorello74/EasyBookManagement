@@ -1,6 +1,7 @@
 from django.contrib import admin
-from operationsLog import backup
+from django.template.loader import render_to_string
 
+from operationsLog import backup
 from operationsLog.models import LogRecord
 
 
@@ -38,11 +39,26 @@ class LoggedModelAdmin(ModelAdminWithoutLogging):
         if queryset.count() == 1:
             LogRecord.objects.log_delete(queryset[0], request.user)
         else:
-            backup_file = backup.create_backup()
+            backup_file = backup.create_backup("bulk-delete")
             LogRecord.objects.log_bulk_delete(
                 queryset, request.user, backup_file=backup_file
             )
         return super().delete_queryset(request, queryset)
+
+
+def join_obj_reprs(ids: list, model, sep=", ", empty_value="-"):
+    """Join str-representations of objects with ids of the given model.
+
+    If these objects no more exist, join ids instead.
+    """
+
+    if ids:
+        qs = model.objects.filter(pk__in=ids)
+        if not qs:
+            qs = ids
+        return ", ".join(str(i) for i in qs)
+    return "-"
+
 
 @admin.register(LogRecord)
 class LogRecordAdmin(ModelAdminWithoutLogging):
@@ -52,5 +68,29 @@ class LogRecordAdmin(ModelAdminWithoutLogging):
         "user",
         "content_type",
         "backup_file",
+        "field_changes",
     ]
 
+    @admin.display(description="Измененные поля")
+    def field_changes(self, instance: LogRecord):
+        if not instance.details.get("field_changes"):
+            return "-"
+
+        opts = instance.content_type.model_class()._meta
+        fields = []
+
+        for field_name, values in instance.details["field_changes"].items():
+            old = values[0]
+            new = values[1]
+            try:
+                field = opts.get_field(field_name)
+                verbose_name = field.verbose_name
+
+                if field.many_to_many:
+                    old = join_obj_reprs(old, field.related_model)
+                    new = join_obj_reprs(new, field.related_model)
+            except Exception:
+                verbose_name = field_name
+            fields.append({"name": verbose_name, "old": old, "new": new})
+
+        return render_to_string("operationsLog/field_changes.html", {"fields": fields})
