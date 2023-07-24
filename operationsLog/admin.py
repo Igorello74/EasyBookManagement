@@ -66,7 +66,7 @@ class LogRecordAdmin(ModelAdminWithoutLogging):
     readonly_fields = [
         "datetime",
         "reason",
-        "user",
+        "user_id",
         "content_type",
         "is_backup_created",
     ]

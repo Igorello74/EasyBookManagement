@@ -1,5 +1,6 @@
 from itertools import chain
 from typing import Collection, Sequence
+import uuid
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -209,6 +210,7 @@ class LogRecord(models.Model):
         BULK_DELETE = "BULK_DELETE", "массовое удаление"
         REVERT = "REVERT", "отмена операции"
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     datetime = models.DateTimeField("дата и время", auto_now_add=True, editable=False)
     operation = models.CharField(
         "тип действия",
@@ -219,10 +221,13 @@ class LogRecord(models.Model):
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        models.CASCADE,
+        models.DO_NOTHING,
         verbose_name="пользователь",
         editable=False,
         null=True,
+        to_field="username",
+        db_constraint=False,
+        db_column="username"
     )
 
     obj_ids = ArrayField(
