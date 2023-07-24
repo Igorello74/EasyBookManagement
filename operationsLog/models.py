@@ -9,6 +9,8 @@ from django.db import models
 from django.forms import ModelForm
 from django.utils.text import get_text_list
 
+from operationsLog import backup
+
 
 class UnicodeJSONEncoder(DjangoJSONEncoder):
     def __init__(self, *args, **kwargs):
@@ -287,6 +289,15 @@ class LogRecord(models.Model):
                 result.append(f"(изменены {get_text_list(verbose_names, 'и')})")
 
         return " ".join(result)
+
+    def revert(self, user=None):
+        if self.backup_file:
+            backup_filename = backup.create_backup("before-revert")
+            backup_filename = str(backup_filename.resolve())
+
+            backup.flush_apps(settings.BACKUP_APPS)
+            backup.load_dump(self.backup_file)
+            LogRecord.objects.log_revert(self, backup_filename, user)
 
     class Meta:
         verbose_name = "запись журнала"
