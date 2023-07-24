@@ -25,7 +25,7 @@ def dump_apps_to_file(
     """
 
     try:
-        filename.resolve()
+        filename = str(filename.resolve())
     except AttributeError:
         pass
 
@@ -84,7 +84,7 @@ def load_dump(
     """
 
     try:
-        filename.resolve()
+        filename = str(filename.resolve())
     except AttributeError:
         pass
 
