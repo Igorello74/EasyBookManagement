@@ -43,12 +43,12 @@ def modelform_to_dict(form: ModelForm):
 def compare_dicts_by_keys(d1: dict, d2: dict) -> dict:
     difference = {}
 
-    for field, val1 in d1.items():
-        if field not in d2:
+    for key, val1 in d1.items():
+        if key not in d2:
             continue
-        val2 = d2[field]
+        val2 = d2[key]
         if val1 != val2:
-            difference[field] = (val1, val2)
+            difference[key] = (val1, val2)
     return difference
 
 
@@ -183,6 +183,19 @@ class LogRecordManager(models.Manager):
             backup_file=backup_file,
         )
 
+    def log_revert(
+        self, reverted_logrecord: "LogRecord", backup_file: str = "", user=None
+    ):
+        return self.create(
+            operation=LogRecord.Operation.REVERT,
+            user=user,
+            backup_file=backup_file,
+            details={
+                "reverted_logrecord": model_to_dict(reverted_logrecord),
+                "revert_from_backup": bool(reverted_logrecord.backup_file),
+            },
+        )
+
 
 class LogRecord(models.Model):
     class Operation(models.TextChoices):
@@ -192,7 +205,7 @@ class LogRecord(models.Model):
         BULK_CREATE = "BULK_CREATE", "массовое создание"
         BULK_UPDATE = "BULK_UPDATE", "массовое изменение"
         BULK_DELETE = "BULK_DELETE", "массовое удаление"
-        REVERT = "REVERT", "отмена действия"
+        REVERT = "REVERT", "отмена операции"
 
     datetime = models.DateTimeField("дата и время", auto_now_add=True, editable=False)
     operation = models.CharField(
@@ -243,10 +256,13 @@ class LogRecord(models.Model):
     objects = LogRecordManager()
 
     def __str__(self):
-        model = self.content_type.model_class()
-        operation = self.get_operation_display().capitalize()
+        operation_pretty = self.get_operation_display().capitalize()
 
-        result = [f"{operation}:"]
+        if self.operation == self.Operation.REVERT:
+            return operation_pretty
+
+        result = [f"{operation_pretty}:"]
+        model = self.content_type.model_class()
 
         if len(self.obj_ids) > 1:
             result.extend(
