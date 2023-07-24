@@ -60,7 +60,6 @@ def join_obj_reprs(ids: list, model, sep=", ", empty_value="-"):
     return empty_value
 
 
-
 @admin.register(LogRecord)
 class LogRecordAdmin(ModelAdminWithoutLogging):
     readonly_fields = [
@@ -76,12 +75,13 @@ class LogRecordAdmin(ModelAdminWithoutLogging):
     date_hierarchy = "datetime"
     list_display = ["__str__", "datetime"]
 
-    def change_view(self, request, object_id, form_url="", extra_context=None):
-        extra_context = extra_context or {}
-        extra_context["title"] = "Запись журнала"
-        return super().change_view(request, object_id, form_url, extra_context)
-
     def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 
     def get_readonly_fields(self, request, obj=None):
