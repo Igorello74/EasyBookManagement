@@ -1,3 +1,4 @@
+from dataclasses import dataclass, asdict
 from itertools import chain
 from typing import Collection, Sequence
 import uuid
@@ -17,6 +18,29 @@ class UnicodeJSONEncoder(DjangoJSONEncoder):
     def __init__(self, *args, **kwargs):
         kwargs["ensure_ascii"] = False
         super().__init__(*args, **kwargs)
+
+
+def _dict_factory(iterable):
+    return dict(i for i in iterable if i[1] is not ...)
+
+
+def dataclass_to_dict(obj):
+    return asdict(obj, dict_factory=_dict_factory)
+
+
+@dataclass
+class LogRecordDetails:
+    reason: str = ...
+    obj_repr: str = ...
+    field_changes: dict[str, tuple[str]] = ...
+    deleted_obj: dict = ...
+
+    objs_repr: dict[str, str] = ...
+    modified_objs: list[str] = ...
+    modified_fields: list[str] = ...
+
+    reverted_logrecord: "LogRecord" = ...
+    revert_from_backup: bool = ...
 
 
 def model_to_dict(obj: models.Model) -> dict:
@@ -62,14 +86,14 @@ class LogRecordManager(models.Manager):
         obj: models.Model,
         user=None,
         reason: str = None,
-        details: dict = None,
+        details: LogRecordDetails = None,
     ) -> "LogRecord":
-        details = details or {}
+        details = details or LogRecordDetails()
         if reason:
-            details["reason"] = reason
+            details.reason = reason
 
         try:
-            details["obj_repr"] = str(obj)
+            details.obj_repr = str(obj)
         except Exception:
             pass
 
@@ -78,7 +102,7 @@ class LogRecordManager(models.Manager):
             user=user,
             obj_ids=[obj.pk],
             content_type=ContentType.objects.get_for_model(obj),
-            details=details,
+            details=dataclass_to_dict(details),
         )
 
     def log_create(self, obj: models.Model, user=None, reason: str = None):
@@ -98,7 +122,7 @@ class LogRecordManager(models.Manager):
             obj,
             user,
             reason,
-            {"field_changes": difference},
+            LogRecordDetails(field_changes=difference),
         )
 
     def log_delete(self, obj: models.Model, user=None, reason: str = None):
@@ -107,7 +131,7 @@ class LogRecordManager(models.Manager):
             obj,
             user,
             reason,
-            details={"deleted_obj": model_to_dict(obj)},
+            LogRecordDetails(deleted_obj=model_to_dict(obj)),
         )
 
     def _log_bulk_operation(
@@ -116,14 +140,14 @@ class LogRecordManager(models.Manager):
         objs: Sequence[models.Model],
         user=None,
         reason: str = None,
-        details: dict = None,
+        details: LogRecordDetails = None,
         backup_file: str = "",
     ) -> "LogRecord":
-        details = details or {}
+        details = details or LogRecordDetails()
         if reason:
-            details["reason"] = reason
+            details.reason = reason
         try:
-            details["objs_repr"] = {i.pk: str(i) for i in objs}
+            details.objs_repr = {i.pk: str(i) for i in objs}
         except Exception:
             pass
 
@@ -132,7 +156,7 @@ class LogRecordManager(models.Manager):
             user=user,
             obj_ids=[i.pk for i in objs],
             content_type=ContentType.objects.get_for_model(objs[0]),
-            details=details,
+            details=dataclass_to_dict(details),
             backup_file=backup_file,
         )
 
@@ -159,9 +183,9 @@ class LogRecordManager(models.Manager):
         modified_fields: Collection[str] = None,
         backup_file: str = "",
     ):
-        details = {}
+        details = LogRecordDetails()
         if modified_fields:
-            details["modified_fields"] = list(modified_fields)
+            details.modified_fields = list(modified_fields)
         self._log_bulk_operation(
             str(LogRecord.Operation.BULK_UPDATE),
             objs,
@@ -193,10 +217,12 @@ class LogRecordManager(models.Manager):
             operation=LogRecord.Operation.REVERT,
             user=user,
             backup_file=backup_file,
-            details={
-                "reverted_logrecord": model_to_dict(reverted_logrecord),
-                "revert_from_backup": bool(reverted_logrecord.backup_file),
-            },
+            details=dataclass_to_dict(
+                LogRecordDetails(
+                    reverted_logrecord=model_to_dict(reverted_logrecord),
+                    revert_from_backup=bool(reverted_logrecord.backup_file),
+                )
+            ),
         )
 
 
@@ -227,7 +253,7 @@ class LogRecord(models.Model):
         null=True,
         to_field="username",
         db_constraint=False,
-        db_column="username"
+        db_column="username",
     )
 
     obj_ids = ArrayField(
