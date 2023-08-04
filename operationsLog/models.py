@@ -20,6 +20,10 @@ class UnicodeJSONEncoder(DjangoJSONEncoder):
         super().__init__(*args, **kwargs)
 
 
+class RevertImpossibleError(RuntimeError):
+    pass
+
+
 def _dict_factory(iterable):
     return dict(i for i in iterable if i[1] is not ...)
 
@@ -322,13 +326,26 @@ class LogRecord(models.Model):
         return " ".join(result)
 
     def revert(self, user=None):
-        if self.backup_file:
-            backup_filename = backup.create_backup("before-revert")
-            backup_filename = str(backup_filename.resolve())
+        backup_filename = str(backup.create_backup("before-revert"))
 
+        if self.backup_file:
             backup.flush_apps(settings.BACKUP_APPS)
             backup.load_dump(self.backup_file)
             LogRecord.objects.log_revert(self, backup_filename, user)
+        else:
+            details = LogRecordDetails(**self.details)
+            model = self.content_type.model_class()
+            obj = model.objects.get_or_create(pk=self.obj_ids[0])
+            match self.operation:
+                case self.Operation.CREATE:
+                    obj.delete()
+                case self.Operation.UPDATE:
+                    for field, values in details.field_changes.items():
+                        old, new = values
+                        setattr(obj, field, old)
+                    obj.save()
+                case self.Operation.DELETE:
+                    ...
 
     class Meta:
         verbose_name = "запись журнала"
