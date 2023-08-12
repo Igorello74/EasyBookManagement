@@ -63,11 +63,16 @@ def modelform_to_dict(form: ModelForm):
     cleaned_data = form.cleaned_data
 
     for f in chain(opts.concrete_fields, opts.private_fields):
-        if f.name in cleaned_data:
-            data[f.name] = cleaned_data[f.name]
+        name = f.name
+        if name in cleaned_data:
+            if f.many_to_one or f.one_to_one:
+                data[name] = cleaned_data[name].pk
+            else:
+                data[name] = cleaned_data[name]
+    
     for f in opts.many_to_many:
-        if f.name in cleaned_data:
-            data[f.name] = sorted([i.pk for i in cleaned_data[f.name]])
+        if name in cleaned_data:
+            data[name] = sorted([i.pk for i in cleaned_data[name]])
     return data
 
 
@@ -336,6 +341,7 @@ class LogRecord(models.Model):
             details = LogRecordDetails(**self.details)
             model = self.content_type.model_class()
             obj = model.objects.get_or_create(pk=self.obj_ids[0])
+
             match self.operation:
                 case self.Operation.CREATE:
                     obj.delete()
@@ -345,7 +351,8 @@ class LogRecord(models.Model):
                         setattr(obj, field, old)
                     obj.save()
                 case self.Operation.DELETE:
-                    ...
+                    opts = model._meta
+                    details.deleted_obj
 
     class Meta:
         verbose_name = "запись журнала"
