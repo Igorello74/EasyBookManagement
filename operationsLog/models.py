@@ -69,7 +69,7 @@ def modelform_to_dict(form: ModelForm):
                 data[name] = cleaned_data[name].pk
             else:
                 data[name] = cleaned_data[name]
-    
+
     for f in opts.many_to_many:
         if name in cleaned_data:
             data[name] = sorted([i.pk for i in cleaned_data[name]])
@@ -357,3 +357,5 @@ class LogRecord(models.Model):
     class Meta:
         verbose_name = "запись журнала"
         verbose_name_plural = "записи журнала"
+        indexes = [models.Index(fields=["-datetime"])]
+        ordering = ["-datetime"]
