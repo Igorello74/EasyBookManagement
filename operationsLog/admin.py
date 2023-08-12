@@ -27,9 +27,10 @@ class LoggedModelAdmin(ModelAdminWithoutLogging):
     def save_model(self, request, obj, form, change):
         if change:
             LogRecord.objects.log_update(obj, form, request.user)
+            super().save_model(request, obj, form, change)
         else:
+            super().save_model(request, obj, form, change)
             LogRecord.objects.log_create(obj, request.user)
-        return super().save_model(request, obj, form, change)
 
     def delete_model(self, request, obj):
         LogRecord.objects.log_delete(obj, request.user)
