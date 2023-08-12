@@ -20,11 +20,14 @@ class UnicodeJSONEncoder(DjangoJSONEncoder):
         super().__init__(*args, **kwargs)
 
 
-class RevertImpossibleError(RuntimeError):
+class ReversionError(RuntimeError):
     pass
 
 
 def _dict_factory(iterable):
+    """Build a dict from an iterable (just like dict(iterable))
+    But items with the value of `...` (Ellipsis) are skipped.
+    """
     return dict(i for i in iterable if i[1] is not ...)
 
 
@@ -36,14 +39,14 @@ def dataclass_to_dict(obj):
 class LogRecordDetails:
     reason: str = ...
     obj_repr: str = ...
-    field_changes: dict[str, tuple[str]] = ...
+    field_changes: dict[str, tuple] = ...
     deleted_obj: dict = ...
 
     objs_repr: dict[str, str] = ...
     modified_objs: list[str] = ...
     modified_fields: list[str] = ...
 
-    reverted_logrecord: "LogRecord" = ...
+    reverted_logrecord: dict = ...
     revert_from_backup: bool = ...
 
 
@@ -86,6 +89,21 @@ def compare_dicts_by_keys(d1: dict, d2: dict) -> dict:
         if val1 != val2:
             difference[key] = (val1, val2)
     return difference
+
+
+def set_field_value(obj: models.Model, field: models.Field, value):
+    """Set obj's field to the given value (like setattr)
+
+    Set obj's field to the given value, also treat relationship fields
+    the proper way: foreign key and one2one fields should be given an id,
+    many2many fields expect a list of ids
+    """
+    if field.many_to_one or field.one_to_one:
+        setattr(obj, f"{field.name}_id", value)
+    elif field.many_to_many:
+        getattr(obj, field.name).set(value)
+    else:
+        setattr(obj, field.name, value)
 
 
 class LogRecordManager(models.Manager):
@@ -331,28 +349,54 @@ class LogRecord(models.Model):
         return " ".join(result)
 
     def revert(self, user=None):
+        """Revert the change this LogRecord was caused by.
+
+        If the LogRecord has a backup_file, this file is used to revert
+        the whole db to the previous state. Otherwise, try to revert
+        the operation by the data stored in the details json field.
+        
+        ReversionError is raised shall an exception occur during reversion.
+        """
         backup_filename = str(backup.create_backup("before-revert"))
 
-        if self.backup_file:
-            backup.flush_apps(settings.BACKUP_APPS)
-            backup.load_dump(self.backup_file)
-            LogRecord.objects.log_revert(self, backup_filename, user)
+        try:
+            if self.backup_file:
+                backup.flush_apps(settings.BACKUP_APPS)
+                backup.load_dump(self.backup_file)
+            else:
+                model = self.content_type.model_class()
+                obj = model(pk=self.obj_ids[0])
+                match self.operation:
+                    case self.Operation.CREATE:
+                        self._revert_create(obj)
+                    case self.Operation.UPDATE:
+                        self._revert_update(obj)
+                    case self.Operation.DELETE:
+                        self._revert_delete(obj)
+        except Exception as e:
+            raise ReversionError from e
         else:
-            details = LogRecordDetails(**self.details)
-            model = self.content_type.model_class()
-            obj = model.objects.get_or_create(pk=self.obj_ids[0])
+            LogRecord.objects.log_revert(self, backup_filename, user)
 
-            match self.operation:
-                case self.Operation.CREATE:
-                    obj.delete()
-                case self.Operation.UPDATE:
-                    for field, values in details.field_changes.items():
-                        old, new = values
-                        setattr(obj, field, old)
-                    obj.save()
-                case self.Operation.DELETE:
-                    opts = model._meta
-                    details.deleted_obj
+    def _revert_create(self, obj):
+        obj.delete()
+
+    def _revert_update(self, obj):
+        details = LogRecordDetails(**self.details)
+
+        for name, values in details.field_changes.items():
+            field = obj._meta.get_field(name)
+            old_value = values[0]
+            set_field_value(obj, field, old_value)
+        obj.save()
+
+    def _revert_delete(self, obj):
+        details = LogRecordDetails(**self.details)
+
+        for name, value in details.deleted_obj.items():
+            field = obj._meta.get_field(name)
+            set_field_value(obj, field, value)
+        obj.save()
 
     class Meta:
         verbose_name = "запись журнала"
