@@ -7,7 +7,7 @@ class GroupFilter(admin.SimpleListFilter):
     title = "класс"
     template = "readersRecords/reader-admin-filter.html"
     parameter_name = "group"
-    query_separator = "~"
+    QUERY_SEPARATOR = "~"
 
     def lookups(self, request, model_admin):
         result = list(
@@ -24,11 +24,15 @@ class GroupFilter(admin.SimpleListFilter):
         return [...]
 
     def queryset(self, request, queryset):
-        v = str(self.value())
-        v = v.split(self.query_separator)
+        if self.value() is None:
+            v = None
+        else:
+            v = str(self.value()).split(self.QUERY_SEPARATOR)
         match v:
             case ["None"]:
-                return queryset
+                return queryset.filter(group_num=None)
+            case ["None", letter]:
+                return queryset.filter(group_num=None, group_letter=letter)
             case [num]:
                 return queryset.filter(group_num=num)
             case [num, letter]:
@@ -45,7 +49,7 @@ class GroupFilter(admin.SimpleListFilter):
         for num, letters_list in self.groups.items():
             sub_choices = []
             for letter in letters_list:
-                lookup = f"{num}{self.query_separator}{letter}"
+                lookup = f"{num}{self.QUERY_SEPARATOR}{letter}"
                 sub_choices.append(
                     {
                         "display": Reader.format_group(num, letter),
@@ -62,6 +66,6 @@ class GroupFilter(admin.SimpleListFilter):
                 "query_string": changelist.get_query_string(
                     {self.parameter_name: lookup}
                 ),
-                "display": f"{num} классы",
+                "display": "Не указан" if num is None else f"{num} классы",
                 "sub_choices": sub_choices,
             }
