@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 import booksRecords.urls
+import operationsLog.urls
 import readersRecords.urls
 
 admin.site.site_header = "Easy Book Management — автоматизированный учёт книг"
@@ -25,6 +26,7 @@ admin.site.site_title = "EBM"
 admin.site.index_title = "Главная страница"
 urlpatterns = [
     path("readersRecords/reader/", include(readersRecords.urls.admin_urlpatterns)),
+    path("operationsLog/", include(operationsLog.urls.urlpatterns)),
     path("", admin.site.urls),
     path("books/", include(booksRecords.urls)),
 ]

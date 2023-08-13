@@ -316,7 +316,7 @@ class LogRecord(models.Model):
     objects = LogRecordManager()
 
     def __str__(self):
-        operation_pretty = self.get_operation_display().capitalize()
+        operation_pretty = self.get_operation_display()
 
         if self.operation == self.Operation.REVERT:
             return operation_pretty
@@ -373,6 +373,9 @@ class LogRecord(models.Model):
                         self._revert_update(obj)
                     case self.Operation.DELETE:
                         self._revert_delete(obj)
+                    case _:
+                        raise ReversionError
+
         except Exception as e:
             raise ReversionError from e
         else:

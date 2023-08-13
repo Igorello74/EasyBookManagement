@@ -1,0 +1,52 @@
+{% extends 'utils/custom_admin_view.html' %}
+
+{% block extrastyle %}
+  <style>
+    #confirm-button,
+    #cancel-button {
+      display: inline-block;
+      border-radius: 4px;
+      vertical-align: middle;
+      padding: 10px 15px;
+      height: 15px;
+      line-height: 15px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #confirm-button {
+      background: var(--delete-button-bg);
+      color: var(--button-fg);
+    }
+    
+    #confirm-button:hover {
+      background: var(--delete-button-hover-bg);
+    }
+    
+    #cancel-button {
+      color: var(--button-fg);
+      background: var(--close-button-bg);
+      margin: 0 0 0 10px;
+    }
+    
+    #cancel-button:hover {
+      background: var(--close-button-hover-bg);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <p>
+    Вы уверены, что хотите отменить <i>{{ logrecord }}</i>?
+    <br> Если нажать "Да, я уверен", {{ revert_operation }}.
+  </p>
+  <p>
+    {% if logrecord.backup_file %}
+      Перед этим действием была создана копия базы данных, потому что оно влияет на несколько объектов.
+      <br>Если отменить его, <b>вся база данных</b> вернётся к прежнему состоянию.
+    {% endif %}
+  </p>
+  <div>
+    <a id="confirm-button" href="{% url 'logrecord-revert' logrecord.id %}?confirm">Да, я уверен</a>
+    <a id="cancel-button" href="javascript:history.back()">Нет, вернуться</a>
+  </div>
+{% endblock %}
