@@ -1,6 +1,6 @@
 from dataclasses import dataclass, asdict
 from itertools import chain
-from typing import Collection, Sequence
+from typing import Any, Collection, Sequence
 import uuid
 
 from django.conf import settings
@@ -22,6 +22,15 @@ class UnicodeJSONEncoder(DjangoJSONEncoder):
 
 class ReversionError(RuntimeError):
     pass
+
+
+class ObjectDoesNotExistError(ReversionError):
+    def __init__(self, *args):
+        self.args = [
+            *args,
+            "You are trying to revert an update operation"
+            " on an object which had been deleted",
+        ]
 
 
 def _dict_factory(iterable):
@@ -91,19 +100,31 @@ def compare_dicts_by_keys(d1: dict, d2: dict) -> dict:
     return difference
 
 
-def set_field_value(obj: models.Model, field: models.Field, value):
-    """Set obj's field to the given value (like setattr)
+def update_obj_from_dict(obj: models.Model, data: dict[str, Any]):
+    """Update the obj's fields by the given data
+    
+    Treats m2m, f/k, o2o properly: m2m fields should be assigned a list of ids,
+    f/k and o2o expect id.
 
-    Set obj's field to the given value, also treat relationship fields
-    the proper way: foreign key and one2one fields should be given an id,
-    many2many fields expect a list of ids
+    Example:
+    `
+    obj = Person(pk=23)
+    data = {"name": "John", "m2m_field": [4, 5, 6], "fk_field": 56}
+    update_obj_from_dict(obj, data)
+    `
     """
-    if field.many_to_one or field.one_to_one:
-        setattr(obj, f"{field.name}_id", value)
-    elif field.many_to_many:
-        getattr(obj, field.name).set(value)
-    else:
-        setattr(obj, field.name, value)
+    deferred_m2m = []
+    for field_name, value in data.items():
+        field = obj._meta.get_field(field_name)
+        if field.many_to_many or field.one_to_many:
+            deferred_m2m.append((field_name, value))
+        elif field.many_to_one or field.one_to_one:
+            setattr(obj, f"{field_name}_id", value)
+        else:
+            setattr(obj, field_name, value)
+    obj.save()
+    for field_name, value in deferred_m2m:
+        getattr(obj, field_name).set(value)
 
 
 class LogRecordManager(models.Manager):
@@ -354,8 +375,8 @@ class LogRecord(models.Model):
         If the LogRecord has a backup_file, this file is used to revert
         the whole db to the previous state. Otherwise, try to revert
         the operation by the data stored in the details json field.
-        
-        ReversionError is raised shall an exception occur during reversion.
+
+        ReversionError is raised should an exception occur during reversion.
         """
         backup_filename = str(backup.create_backup("before-revert"))
 
@@ -365,17 +386,21 @@ class LogRecord(models.Model):
                 backup.load_dump(self.backup_file)
             else:
                 model = self.content_type.model_class()
-                obj = model(pk=self.obj_ids[0])
+                id = self.obj_ids[0]
                 match self.operation:
                     case self.Operation.CREATE:
+                        obj = model(pk=id)
                         self._revert_create(obj)
                     case self.Operation.UPDATE:
+                        obj = model.objects.get(pk=id)
                         self._revert_update(obj)
                     case self.Operation.DELETE:
+                        obj = model(pk=id)
                         self._revert_delete(obj)
                     case _:
                         raise ReversionError
-
+        except model.DoesNotExist as e:
+            raise ObjectDoesNotExistError from e
         except Exception as e:
             raise ReversionError from e
         else:
@@ -386,20 +411,12 @@ class LogRecord(models.Model):
 
     def _revert_update(self, obj):
         details = LogRecordDetails(**self.details)
-
-        for name, values in details.field_changes.items():
-            field = obj._meta.get_field(name)
-            old_value = values[0]
-            set_field_value(obj, field, old_value)
-        obj.save()
+        orig_state = {name: old for name, (old, _) in details.field_changes.items()}
+        update_obj_from_dict(obj, orig_state)
 
     def _revert_delete(self, obj):
         details = LogRecordDetails(**self.details)
-
-        for name, value in details.deleted_obj.items():
-            field = obj._meta.get_field(name)
-            set_field_value(obj, field, value)
-        obj.save()
+        update_obj_from_dict(obj, details.deleted_obj)
 
     class Meta:
         verbose_name = "запись журнала"
