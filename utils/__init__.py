@@ -80,13 +80,13 @@ def modelform_to_dict(form: ModelForm):
     return data
 
 
-def _dict_factory(iterable):
-    return dict(i for i in iterable if i[1] is not ...)
+def _dict_factory(items):
+    return dict((k, v) for k, v in items if v is not None)
 
 
 def dataclass_to_dict(obj):
     """Transform a dataclass to dict
 
-    Items with the value of `...` (Ellipsis) are skipped.
+    Items with the value of None are skipped.
     """
     return asdict(obj, dict_factory=_dict_factory)

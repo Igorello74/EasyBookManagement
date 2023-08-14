@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from django.db import models
 
+
 class Operation(models.TextChoices):
     CREATE = "CREATE", "создание"
     UPDATE = "UPDATE", "изменение"
@@ -13,14 +14,15 @@ class Operation(models.TextChoices):
 
 @dataclass
 class LogRecordDetails:
-    reason: str = ...
-    obj_repr: str = ...
-    field_changes: dict[str, tuple] = ...
-    deleted_obj: dict = ...
+    reason: str = None
 
-    objs_repr: dict[str, str] = ...
-    modified_objs: list[str] = ...
-    modified_fields: list[str] = ...
+    obj_repr: str = None
+    field_changes: dict[str, tuple] = None
+    deleted_obj: dict = None
 
-    reverted_logrecord: dict = ...
-    revert_from_backup: bool = ...
+    objs_repr: dict[str, str] = None
+    modified_objs: list[str] = None
+    modified_fields: list[str] = None
+
+    reverted_logrecord: str = None
+    revert_from_backup: bool = None
