@@ -147,10 +147,12 @@ class LogRecordManager(models.Manager):
         return self.create(
             operation=Operation.REVERT,
             user=user,
+            obj_ids=[reverted_logrecord.id],
+            content_type=ContentType.objects.get_for_model(reverted_logrecord),
             backup_file=backup_file,
             details=dataclass_to_dict(
                 LogRecordDetails(
-                    reverted_logrecord=model_to_dict(reverted_logrecord),
+                    obj_repr=str(reverted_logrecord),
                     revert_from_backup=bool(reverted_logrecord.backup_file),
                 )
             ),
