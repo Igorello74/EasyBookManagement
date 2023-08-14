@@ -15,6 +15,9 @@ from operationsLog import backup
 from operationsLog.manager import LogRecordManager
 
 
+BackupCorruptedError = backup.BackupCorruptedError
+
+
 class UnicodeJSONEncoder(DjangoJSONEncoder):
     def __init__(self, *args, **kwargs):
         kwargs["ensure_ascii"] = False
@@ -33,6 +36,7 @@ class AlreadyRevertedErorr(ReversionError):
     def __init__(self, reverted_by_id: str, *args):
         self.args = args
         self.reverted_by_id = reverted_by_id
+
 
 def update_obj_from_dict(obj: models.Model, data: dict[str, Any]):
     """Update the obj's fields by the given data
@@ -166,13 +170,14 @@ class LogRecord(models.Model):
                 self.details_dc.reverted_by,
                 "This LogRecord has already been reverted",
             )
-        try:
-            if self.backup_file:
-                with atomic():
-                    backup.flush_apps(settings.BACKUP_APPS)
-                    backup.load_dump(self.backup_file)
-                return
 
+        if self.backup_file:
+            with atomic():
+                backup.flush_apps(settings.BACKUP_APPS)
+                backup.load_dump(self.backup_file)
+            return
+
+        try:
             model = self.content_type.model_class()
             id = self.obj_ids[0]
             match self.operation:
@@ -196,7 +201,6 @@ class LogRecord(models.Model):
             self.details = self.details_dc.to_dict()
             self.save()
 
-
     def _revert_create(self, model, id):
         model(pk=id).delete()
 
@@ -205,7 +209,7 @@ class LogRecord(models.Model):
             obj = model.objects.get(pk=id)
         except model.DoesNotExist as e:
             raise ObjectDoesNotExistError(
-                "You are trying to revert an update operation" " on a deleted object",
+                "You are trying to revert an update operation on a deleted object",
             ) from e
 
         details = self.details_dc

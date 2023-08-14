@@ -3,24 +3,24 @@ from django.views.generic import TemplateView
 from django.contrib import messages
 from django.utils.html import format_html
 
-from operationsLog.models import LogRecord, ReversionError
+from operationsLog import models
 from utils.views import CustomAdminViewMixin
 
 
-Operation = LogRecord.Operation
+Operation = models.LogRecord.Operation
 REVERT_OPERATION_MESSAGES = {
-    Operation.CREATE: "будет удалён созданный объект",
-    Operation.UPDATE: "будут отменены изменения над объектом",
-    Operation.DELETE: "будет восстановлен удалённый объект",
-    Operation.BULK_CREATE: "будут удалены созданные объекты",
-    Operation.BULK_UPDATE: "будут отменены изменения над объектами",
-    Operation.BULK_DELETE: "будут восстановлены удалённые объекты",
-    Operation.REVERT: "будет восстановлено отменённое действие",
+    Operation.CREATE: "созданный объект будет удалён",
+    Operation.UPDATE: "изменения над объектом будут отменены",
+    Operation.DELETE: "удалённый объект будет восстановлен",
+    Operation.BULK_CREATE: "созданные объекты будут удалены",
+    Operation.BULK_UPDATE: "изменения над объектами будут отменены",
+    Operation.BULK_DELETE: "удалённые объекты будут восстановлены",
+    Operation.REVERT: "отменённое действие будет восстановлено",
 }
 
 
 class RevertLogRecordView(CustomAdminViewMixin, TemplateView):
-    model = LogRecord
+    model = models.LogRecord
     template_name = "operationsLog/revert-logrecord-confirm.html"
 
     def get(self, request, id, *args, **kwargs):
@@ -31,7 +31,7 @@ class RevertLogRecordView(CustomAdminViewMixin, TemplateView):
 
     def confirm(self, id):
         try:
-            logrecord = get_object_or_404(LogRecord, id=id)
+            logrecord = get_object_or_404(models.LogRecord, id=id)
             message = format_html(
                 "Успешно отменено действие <span style="
                 '"border: solid 1px #0000001f;padding: 2px;border-radius: 7px;">'
@@ -41,7 +41,32 @@ class RevertLogRecordView(CustomAdminViewMixin, TemplateView):
             logrecord.revert(self.request.user)
 
             messages.success(self.request, message)
-        except ReversionError as e:
+        except models.BackupCorruptedError:
+            messages.error(
+                self.request,
+                "Невозможно отменить действие, "
+                "потому что резервная копия повреждена. "
+                "Обратитесь к администратору.",
+            )
+        except models.AlreadyRevertedErorr as e:
+            try:
+                dt = models.LogRecord.objects.get(id=e.reverted_by_id).datetime
+                dt = dt.astimezone()  # convert the dt (in utc) to the local tz
+                when = f" ({dt:%d.%m.%Y в %H:%M})"
+            except Exception:
+                when = ""
+
+            messages.error(
+                self.request,
+                f"Это действие уже отменено{when}. Невозможно отменить его повторно.",
+            )
+        except models.ObjectDoesNotExistError:
+            messages.error(
+                self.request,
+                "Невозможно изменить объект, который удалён. "
+                "Сначала восстановите объект (отмените удаление объекта).",
+            )
+        except models.ReversionError as e:
             messages.error(
                 self.request,
                 "Невозможно отменить действие. Обратитесь к администратору.",
@@ -49,7 +74,7 @@ class RevertLogRecordView(CustomAdminViewMixin, TemplateView):
         return redirect("admin:operationsLog_logrecord_changelist")
 
     def not_confirm(self, id):
-        logrecord = get_object_or_404(LogRecord, id=id)
+        logrecord = get_object_or_404(models.LogRecord, id=id)
 
         self.title = f"Отменить {logrecord}"
 

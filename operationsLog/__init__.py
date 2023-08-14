@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from django.db import models
+from django.db.models import TextChoices
 
 from utils import dataclass_to_dict
 
-class Operation(models.TextChoices):
+class Operation(TextChoices):
     CREATE = "CREATE", "создание"
     UPDATE = "UPDATE", "изменение"
     DELETE = "DELETE", "удаление"

@@ -13,6 +13,12 @@ from django.db import IntegrityError
 FLUSH_APPS_UNSUCCESSFUL_TRIES = 50
 
 
+class BackupCorruptedError(RuntimeError):
+    def __init__(self, backup_filename: str, *args):
+        self.args = args
+        self.backup_filename = backup_filename
+
+
 def dump_apps_to_file(
     filename: Path | str,
     app_labels: Sequence[str] = (),
@@ -88,14 +94,19 @@ def load_dump(
     except AttributeError:
         pass
 
-    call_command(
-        loaddata.Command(),
-        str(filename),
-        format=format,
-        ignore=ignore_existent,
-        exclude=exclude,
-        verbosity=0,
-    )
+    try:
+        call_command(
+            loaddata.Command(),
+            str(filename),
+            format=format,
+            ignore=ignore_existent,
+            exclude=exclude,
+            verbosity=0,
+        )
+    except Exception as e:
+        raise BackupCorruptedError(
+            str(filename), "The backup file you're trying to load is corrupted"
+        )
 
 
 def flush_apps(app_labels: Sequence[str]):
