@@ -74,7 +74,7 @@ class LogRecordAdmin(ModelAdminWithoutLogging):
     conditional_fields = ["obj_repr", "field_changes", "objs_repr", "modified_fields"]
 
     date_hierarchy = "datetime"
-    list_display = ["__str__", "datetime"]
+    list_display = ["__html__", "datetime"]
 
     def has_add_permission(self, request):
         return False

@@ -8,6 +8,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.transaction import atomic
 from django.utils.text import get_text_list
+from django.utils.safestring import mark_safe
 
 from operationsLog import LogRecordDetails
 from operationsLog import Operation as _Operation
@@ -121,37 +122,50 @@ class LogRecord(models.Model):
     objects = LogRecordManager()
 
     def __str__(self):
-        operation_pretty = self.get_operation_display()
+        details = LogRecordDetails(**self.details)
+        operation = self.get_operation_display().capitalize()
+        obj_repr = details.obj_repr or ""
 
         if self.operation == self.Operation.REVERT:
-            return operation_pretty
+            if obj_repr:
+                return f'{operation}: "{obj_repr}"'
+            return operation
 
-        result = [f"{operation_pretty}:"]
         model = self.content_type.model_class()
 
         if len(self.obj_ids) > 1:
-            result.extend(
-                (model._meta.verbose_name_plural, f"({len(self.obj_ids)} шт.)")
-            )
+            model_name = f"{model._meta.verbose_name_plural} ({len(self.obj_ids)} шт.)"
         else:
-            result.append(model._meta.verbose_name)
+            model_name = model._meta.verbose_name
 
-        if "obj_repr" in self.details:
-            result.append(f" {self.details['obj_repr']}")
-
-        if "field_changes" in self.details:
-            verbose_names = []
-            for field in self.details["field_changes"]:
+        field_changes = ""
+        verbose_names = []
+        if details.field_changes:
+            for field in details.field_changes.keys():
                 try:
-                    verbose_names.append(getattr(model, field).field.verbose_name)
-                except AttributeError:
+                    verbose_names.append(model._meta.get_field(field).verbose_name)
+                except Exception:
                     verbose_names.append(field)
-            if len(verbose_names) == 1:
-                result.append(f'(изменено поле "{verbose_names[0]}")')
-            else:
-                result.append(f"(изменены {get_text_list(verbose_names, 'и')})")
 
-        return " ".join(result)
+            if len(verbose_names) == 1:
+                field_changes = f'(изменено поле "{verbose_names[0]}")'
+            else:
+                field_changes = f"(изменены {get_text_list(verbose_names, 'и')})"
+
+        result = f"{operation}: {model_name} {obj_repr} {field_changes}".strip()
+
+        while "  " in result:
+            result = result.replace("  ", " ")
+        return result
+
+    @mark_safe
+    def __html__(self):
+        s = str(self)
+        details = LogRecordDetails(**self.details)
+        if details.reverted_by:
+            return f'<i>(действие отменено)</i> <span style="text-decoration: line-through">{s}</span>'
+        return s
+    __html__.short_description='запись журнала'
 
     def revert(self, user=None):
         """Revert the change this LogRecord was caused by.
