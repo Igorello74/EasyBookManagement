@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.db.transaction import atomic
 from django.utils.text import get_text_list
 
 from operationsLog import LogRecordDetails
@@ -25,12 +26,7 @@ class ReversionError(RuntimeError):
 
 
 class ObjectDoesNotExistError(ReversionError):
-    def __init__(self, *args):
-        self.args = [
-            *args,
-            "You are trying to revert an update operation"
-            " on an object which had been deleted",
-        ]
+    pass
 
 
 def update_obj_from_dict(obj: models.Model, data: dict[str, Any]):
@@ -158,42 +154,51 @@ class LogRecord(models.Model):
         ReversionError is raised should an exception occur during reversion.
         """
         backup_filename = str(backup.create_backup("before-revert"))
-
+        
         try:
             if self.backup_file:
-                backup.flush_apps(settings.BACKUP_APPS)
-                backup.load_dump(self.backup_file)
-            else:
-                model = self.content_type.model_class()
-                id = self.obj_ids[0]
-                match self.operation:
-                    case self.Operation.CREATE:
-                        obj = model(pk=id)
-                        self._revert_create(obj)
-                    case self.Operation.UPDATE:
-                        obj = model.objects.get(pk=id)
-                        self._revert_update(obj)
-                    case self.Operation.DELETE:
-                        obj = model(pk=id)
-                        self._revert_delete(obj)
-                    case _:
-                        raise ReversionError
-        except model.DoesNotExist as e:
-            raise ObjectDoesNotExistError from e
+                with atomic():
+                    backup.flush_apps(settings.BACKUP_APPS)
+                    backup.load_dump(self.backup_file)
+                return
+            
+            model = self.content_type.model_class()
+            id = self.obj_ids[0]
+            match self.operation:
+                case self.Operation.CREATE:
+                    self._revert_create(model, id)
+                case self.Operation.UPDATE:
+                    self._revert_update(model, id)
+                case self.Operation.DELETE:
+                    self._revert_delete(model, id)
+                case self.Operation.BULK_CREATE:
+                    model.objects.filter(pk__in=self.obj_ids).delete()
+                case _:
+                    raise ReversionError
+        except ObjectDoesNotExistError:
+            raise
         except Exception as e:
             raise ReversionError from e
         else:
             LogRecord.objects.log_revert(self, backup_filename, user)
 
-    def _revert_create(self, obj):
-        obj.delete()
+    def _revert_create(self, model, id):
+        model(pk=id).delete()
 
-    def _revert_update(self, obj):
+    def _revert_update(self, model, id):
+        try:
+            obj = model.objects.get(pk=id)
+        except model.DoesNotExist as e:
+            raise ObjectDoesNotExistError(
+                "You are trying to revert an update operation" " on a deleted object",
+            ) from e
+
         details = LogRecordDetails(**self.details)
         orig_state = {name: old for name, (old, _) in details.field_changes.items()}
         update_obj_from_dict(obj, orig_state)
 
-    def _revert_delete(self, obj):
+    def _revert_delete(self, model, id):
+        obj = model(pk=id)
         details = LogRecordDetails(**self.details)
         update_obj_from_dict(obj, details.deleted_obj)
 
