@@ -1,4 +1,3 @@
-from django.http import HttpResponseServerError
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import TemplateView
 from django.contrib import messages
@@ -6,7 +5,6 @@ from django.contrib import messages
 from operationsLog.models import LogRecord, ReversionError
 from utils.views import CustomAdminViewMixin
 
-import traceback
 
 Operation = LogRecord.Operation
 REVERT_OPERATION_MESSAGES = {
