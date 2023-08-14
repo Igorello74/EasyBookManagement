@@ -130,6 +130,11 @@ class LogRecord(models.Model):
             if obj_repr:
                 return f'{operation}: "{obj_repr}"'
             return operation
+        
+
+        reason = ""
+        if details.reason:
+            reason = f"({details.reason})"
 
         model = self.content_type.model_class()
 
@@ -152,7 +157,10 @@ class LogRecord(models.Model):
             else:
                 field_changes = f"(изменены {get_text_list(verbose_names, 'и')})"
 
-        result = f"{operation}: {model_name} {obj_repr} {field_changes}".strip()
+        if reason:
+            result = f"{operation} {reason}: {model_name} {obj_repr} {field_changes}".strip()
+        else:
+            result = f"{operation}: {model_name} {obj_repr} {field_changes}".strip()
 
         while "  " in result:
             result = result.replace("  ", " ")
