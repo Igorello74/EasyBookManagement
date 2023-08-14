@@ -29,6 +29,11 @@ class ObjectDoesNotExistError(ReversionError):
     pass
 
 
+class AlreadyRevertedErorr(ReversionError):
+    def __init__(self, reverted_by_id: str, *args):
+        self.args = args
+        self.reverted_by_id = reverted_by_id
+
 def update_obj_from_dict(obj: models.Model, data: dict[str, Any]):
     """Update the obj's fields by the given data
 
@@ -154,14 +159,20 @@ class LogRecord(models.Model):
         ReversionError is raised should an exception occur during reversion.
         """
         backup_filename = str(backup.create_backup("before-revert"))
-        
+        self.details_dc = LogRecordDetails(**self.details)
+
+        if self.details_dc.reverted_by:
+            raise AlreadyRevertedErorr(
+                self.details_dc.reverted_by,
+                "This LogRecord has already been reverted",
+            )
         try:
             if self.backup_file:
                 with atomic():
                     backup.flush_apps(settings.BACKUP_APPS)
                     backup.load_dump(self.backup_file)
                 return
-            
+
             model = self.content_type.model_class()
             id = self.obj_ids[0]
             match self.operation:
@@ -180,7 +191,11 @@ class LogRecord(models.Model):
         except Exception as e:
             raise ReversionError from e
         else:
-            LogRecord.objects.log_revert(self, backup_filename, user)
+            revert_logrecord = LogRecord.objects.log_revert(self, backup_filename, user)
+            self.details_dc.reverted_by = str(revert_logrecord.id)
+            self.details = self.details_dc.to_dict()
+            self.save()
+
 
     def _revert_create(self, model, id):
         model(pk=id).delete()
@@ -193,13 +208,13 @@ class LogRecord(models.Model):
                 "You are trying to revert an update operation" " on a deleted object",
             ) from e
 
-        details = LogRecordDetails(**self.details)
+        details = self.details_dc
         orig_state = {name: old for name, (old, _) in details.field_changes.items()}
         update_obj_from_dict(obj, orig_state)
 
     def _revert_delete(self, model, id):
         obj = model(pk=id)
-        details = LogRecordDetails(**self.details)
+        details = self.details_dc
         update_obj_from_dict(obj, details.deleted_obj)
 
     class Meta:

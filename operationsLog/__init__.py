@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from django.db import models
 
+from utils import dataclass_to_dict
 
 class Operation(models.TextChoices):
     CREATE = "CREATE", "создание"
@@ -15,6 +16,7 @@ class Operation(models.TextChoices):
 @dataclass
 class LogRecordDetails:
     reason: str = None
+    reverted_by: str = None
 
     obj_repr: str = None
     field_changes: dict[str, tuple] = None
@@ -26,3 +28,6 @@ class LogRecordDetails:
 
     reverted_logrecord: str = None
     revert_from_backup: bool = None
+
+    def to_dict(self) -> dict:
+        return dataclass_to_dict(self)
