@@ -63,15 +63,19 @@ def join_obj_reprs(ids: list, model, sep=", ", empty_value="-"):
 
 @admin.register(LogRecord)
 class LogRecordAdmin(ModelAdminWithoutLogging):
-    readonly_fields = [
+    CONDITIONAL_FIELD_PREFIX = "~"
+    readonly_fields_ = [
         "datetime",
-        "reason",
-        "user_id",
+        "~reason",
+        "user",
         "content_type",
+        "~obj_repr",
+        "~deleted_obj",
+        "~field_changes",
         "is_backup_created",
+        "~objs_repr",
+        "~modified_fields",
     ]
-
-    conditional_fields = ["obj_repr", "field_changes", "objs_repr", "modified_fields"]
 
     date_hierarchy = "datetime"
     list_display = ["__html__", "datetime"]
@@ -86,13 +90,14 @@ class LogRecordAdmin(ModelAdminWithoutLogging):
         return False
 
     def get_readonly_fields(self, request, obj=None):
-        fields = list(super().get_readonly_fields(request, obj))
-        if obj is not None:
-            for i in self.conditional_fields:
-                if obj.details.get(i):
-                    fields.append(i)
-            if not obj.details.get("reason"):
-                fields.remove("reason")
+        fields = []
+        for f in self.readonly_fields_:
+            if f.startswith(self.CONDITIONAL_FIELD_PREFIX):
+                f = f.removeprefix(self.CONDITIONAL_FIELD_PREFIX)
+                if obj is not None and obj.details.get(f) is not None:
+                    fields.append(f)
+            else:
+                fields.append(f)
         return fields
 
     @admin.display(description="Резервная копия")
@@ -166,3 +171,23 @@ class LogRecordAdmin(ModelAdminWithoutLogging):
             except:
                 results.append(field_name)
         return ", ".join(results)
+
+    @admin.display(description="Удалённый объект")
+    def deleted_obj(self, instance: LogRecord):
+        opts = instance.content_type.model_class()._meta
+        obj = {}
+        for field_name, value in instance.details["deleted_obj"].items():
+            try:
+                field = opts.get_field(field_name)
+                verbose_name = field.verbose_name
+                if field.many_to_many:
+                    model = field.related_model
+                    value = ", ".join(str(model.objects.get(pk=i)) for i in value)
+                elif field.many_to_one:
+                    model = field.related_model
+                    value = str(model.objects.get(pk=value))
+            except Exception:
+                verbose_name = field_name
+            obj[verbose_name] = value
+
+        return render_to_string("operationsLog/deleted_obj.html", {"obj": obj})
