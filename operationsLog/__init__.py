@@ -24,7 +24,6 @@ class LogRecordDetails:
     deleted_obj: dict = None
 
     objs_repr: dict[str, str] = None
-    modified_objs: list[str] = None
     modified_fields: list[str] = None
 
     revert_from_backup: bool = None
@@ -40,7 +39,6 @@ class LogRecordDetails:
         field_changes: dict[str, tuple] = None,
         deleted_obj: dict = None,
         objs_repr: dict[str, str] = None,
-        modified_objs: list[str] = None,
         modified_fields: list[str] = None,
         revert_from_backup: bool = None,
         **kwargs
@@ -51,6 +49,5 @@ class LogRecordDetails:
         self.field_changes = field_changes
         self.deleted_obj = deleted_obj
         self.objs_repr = objs_repr
-        self.modified_objs = modified_objs
         self.modified_fields = modified_fields
         self.revert_from_backup = revert_from_backup
