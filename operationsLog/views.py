@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import TemplateView
 from django.contrib import messages
+from django.utils.html import format_html
 
 from operationsLog.models import LogRecord, ReversionError
 from utils.views import CustomAdminViewMixin
@@ -31,11 +32,20 @@ class RevertLogRecordView(CustomAdminViewMixin, TemplateView):
     def confirm(self, id):
         try:
             logrecord = get_object_or_404(LogRecord, id=id)
-            logrecord_repr = str(logrecord)
+            message = format_html(
+                "Успешно отменено действие <span style="
+                '"border: solid 1px #0000001f;padding: 2px;border-radius: 7px;">'
+                "{}</span>",
+                str(logrecord),
+            )
             logrecord.revert(self.request.user)
-            messages.success(self.request, f"Успешно отменено действие {logrecord_repr}")
+
+            messages.success(self.request, message)
         except ReversionError as e:
-            messages.error(self.request, "Невозможно отменить действие. Обратитесь к администратору.")
+            messages.error(
+                self.request,
+                "Невозможно отменить действие. Обратитесь к администратору.",
+            )
         return redirect("admin:operationsLog_logrecord_changelist")
 
     def not_confirm(self, id):
