@@ -1,11 +1,12 @@
+from django.contrib import admin, messages
+from django.contrib.auth.decorators import permission_required
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import TemplateView
-from django.contrib import messages
+from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.views.generic import TemplateView
 
 from operationsLog import models
 from utils.views import CustomAdminViewMixin
-
 
 Operation = models.LogRecord.Operation
 REVERT_OPERATION_MESSAGES = {
@@ -19,6 +20,10 @@ REVERT_OPERATION_MESSAGES = {
 }
 
 
+@method_decorator(
+    permission_required("operationsLog.view_logrecord", raise_exception=True),
+    name="dispatch",
+)
 class RevertLogRecordView(CustomAdminViewMixin, TemplateView):
     model = models.LogRecord
     template_name = "operationsLog/revert-logrecord-confirm.html"
@@ -52,7 +57,7 @@ class RevertLogRecordView(CustomAdminViewMixin, TemplateView):
             try:
                 dt = models.LogRecord.objects.get(id=e.reverted_by_id).datetime
                 dt = dt.astimezone()  # convert the dt (in utc) to the local tz
-                when = f" ({dt:%d.%m.%Y в %H:%M})"
+                when = f" {dt:%d.%m.%Y в %H:%M}"
             except Exception:
                 when = ""
 
@@ -85,4 +90,4 @@ class RevertLogRecordView(CustomAdminViewMixin, TemplateView):
         return self.render_to_response(context)
 
 
-revert_logrecord = RevertLogRecordView.as_view()
+revert_logrecord = admin.site.admin_view(RevertLogRecordView.as_view())
