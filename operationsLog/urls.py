@@ -4,5 +4,5 @@ from . import views
 
 app_name = "operationsLog"
 urlpatterns = [
-    path("revert/<uuid:id>/", views.revert_logrecord, name="logrecord-revert"),
+    path("logrecord/<uuid:id>/revert/", views.revert_logrecord, name="logrecord-revert"),
 ]
