@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                             ("BULK_CREATE", "массовое создание"),
                             ("BULK_UPDATE", "массовое изменение"),
                             ("BULK_DELETE", "массовое удаление"),
-                            ("REVERT", "отмена операции"),
+                            ("REVERT", "отмена действия"),
                         ],
                         editable=False,
                         max_length=20,

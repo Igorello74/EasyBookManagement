@@ -11,7 +11,7 @@ class Operation(TextChoices):
     BULK_CREATE = "BULK_CREATE", "массовое создание"
     BULK_UPDATE = "BULK_UPDATE", "массовое изменение"
     BULK_DELETE = "BULK_DELETE", "массовое удаление"
-    REVERT = "REVERT", "отмена операции"
+    REVERT = "REVERT", "отмена действия"
 
 
 @dataclass(init=False)
