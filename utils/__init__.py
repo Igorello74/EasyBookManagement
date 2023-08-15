@@ -64,18 +64,19 @@ def model_to_dict(obj: models.Model) -> dict:
 def modelform_to_dict(form: ModelForm):
     opts = form._meta.model._meta
     data = {}
-    cleaned_data = form.cleaned_data
+    cleaned_data: dict = form.cleaned_data
 
     for f in chain(opts.concrete_fields, opts.private_fields):
         name = f.name
-        if name in cleaned_data:
+        if cleaned_data.get(name) is not None:
             if f.many_to_one or f.one_to_one:
                 data[name] = cleaned_data[name].pk
             else:
                 data[name] = cleaned_data[name]
 
     for f in opts.many_to_many:
-        if f.name in cleaned_data:
+        name = f.name
+        if cleaned_data.get(name) is not None:
             data[f.name] = sorted([i.pk for i in cleaned_data[f.name]])
     return data
 
