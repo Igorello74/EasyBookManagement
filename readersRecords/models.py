@@ -4,6 +4,8 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 
+from utils.cases import Cases
+
 
 GROUP_PATTERN = re.compile(r"(\d+).*?([а-яёa-z]+)", re.I)
 # a regexp pattern matching any string that resembles a group.
@@ -152,3 +154,5 @@ class Reader(models.Model):
 
         verbose_name = "читатель"
         verbose_name_plural = "читатели"
+
+    name_cases = Cases(meta=Meta, gen="читателя", gen_pl="читателей")
