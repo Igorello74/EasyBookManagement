@@ -10,7 +10,7 @@ class Operation(TextChoices):
     DELETE = "DELETE", "удаление"
     BULK_CREATE = "BULK_CREATE", "массовое создание"
     BULK_UPDATE = "BULK_UPDATE", "массовое изменение"
-    BULK_DELETE = "BULK_DELETE", "массовое удаление"
+    BULK_DELETE = "BULK_DELETE", "удаление"
     REVERT = "REVERT", "отмена действия"
 
 

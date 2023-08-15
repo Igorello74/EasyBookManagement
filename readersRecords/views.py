@@ -88,7 +88,7 @@ def get_item(dictionary, key):
 )
 class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
     model = Reader
-    view_name = "Изменить класс учеников"
+    title = "Изменить класс учеников"
     template_name = "readersRecords/change-group.html"
 
     def render_and_get_context(self, context, **response_kwargs):
@@ -121,7 +121,12 @@ class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
                 ["group_num", "group_letter"],
                 backup_filename,
             )
-            queryset.update(group_num=parsed.num, group_letter=parsed.letter)
+            updated = queryset.update(group_num=parsed.num, group_letter=parsed.letter)
+            messages.success(
+                request,
+                f"{updated} учеников были переведены "
+                f"в {parsed.num}{parsed.letter} класс."
+            )
             return redirect("admin:readersRecords_reader_changelist")
 
 
@@ -169,7 +174,7 @@ class UpdateStudentsGradeView(View):
             LogRecord.objects.log_bulk_update(
                 non_graduating,
                 request.user,
-                "перевод учеников в следующий класс",
+                "перевод в следующий класс",
                 ["group_num"],
                 backup_filename,
             )
@@ -177,7 +182,7 @@ class UpdateStudentsGradeView(View):
             LogRecord.objects.log_bulk_delete(
                 graduating,
                 request.user,
-                "выпуск учеников",
+                "выпуск",
                 backup_filename,
             )
 
