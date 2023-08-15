@@ -7,14 +7,14 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.transaction import atomic
-from django.utils.text import get_text_list
 from django.utils.safestring import mark_safe
+from django.utils.text import get_text_list
 
 from operationsLog import LogRecordDetails
 from operationsLog import Operation as _Operation
 from operationsLog import backup
 from operationsLog.manager import LogRecordManager
-
+from utils import cases
 
 BackupCorruptedError = backup.BackupCorruptedError
 
@@ -123,45 +123,48 @@ class LogRecord(models.Model):
 
     def __str__(self):
         details = LogRecordDetails(**self.details)
-        operation = self.get_operation_display().capitalize()
         obj_repr = details.obj_repr or ""
+
+        if details.reason:
+            operation = details.reason.capitalize()
+        else:
+            operation = self.get_operation_display().capitalize()
 
         if self.operation == self.Operation.REVERT:
             if obj_repr:
-                return f'{operation}: "{obj_repr}"'
+                return f'{operation} "{obj_repr}"'
             return operation
-        
 
-        reason = ""
-        if details.reason:
-            reason = f"({details.reason})"
-
-        model = self.content_type.model_class()
+        try:
+            model = self.content_type.model_class()
+        except AttributeError:
+            return f'{operation} {obj_repr}'.strip()
 
         if len(self.obj_ids) > 1:
-            model_name = f"{model._meta.verbose_name_plural} ({len(self.obj_ids)} шт.)"
+            model_name = f"{len(self.obj_ids)} {cases.gen_pl(model)}"
         else:
-            model_name = model._meta.verbose_name
+            model_name = cases.gen(model)
 
-        field_changes = ""
+        # details.field_changes might be None and I don't want to get
+        # an AttributeError when calling details.field_changes.keys()
+        details.field_changes = details.field_changes or dict()
         verbose_names = []
-        if details.field_changes:
-            for field in details.field_changes.keys():
-                try:
-                    verbose_names.append(model._meta.get_field(field).verbose_name)
-                except Exception:
-                    verbose_names.append(field)
+        for field in details.field_changes.keys():
+            try:
+                verbose_names.append(model._meta.get_field(field).verbose_name)
+            except Exception:
+                # The field might be deleted, so we can't get its verbose_name
+                verbose_names.append(field)
 
-            if len(verbose_names) == 1:
-                field_changes = f'(изменено поле "{verbose_names[0]}")'
-            else:
-                field_changes = f"(изменены {get_text_list(verbose_names, 'и')})"
-
-        if reason:
-            result = f"{operation} {reason}: {model_name} {obj_repr} {field_changes}".strip()
+        if len(verbose_names) == 1:
+            field_changes = f'(изменено поле "{verbose_names[0]}")'
+        elif len(verbose_names) > 1:
+            field_changes = f"(изменены {get_text_list(verbose_names, 'и')})"
         else:
-            result = f"{operation}: {model_name} {obj_repr} {field_changes}".strip()
+            field_changes = ""
 
+        # Some extra spaces may happen to be in the result, so I have to delete them
+        result = f"{operation} {model_name} {obj_repr} {field_changes}".strip()
         while "  " in result:
             result = result.replace("  ", " ")
         return result
@@ -171,9 +174,10 @@ class LogRecord(models.Model):
         s = str(self)
         details = LogRecordDetails(**self.details)
         if details.reverted_by:
-            return f'<i>(действие отменено)</i> <span style="text-decoration: line-through">{s}</span>'
+            return f'<i>(действие отменено)</i> <span style="text-decoration:\
+line-through">{s}</span>'
         return s
-    __html__.short_description='запись журнала'
+    __html__.short_description = 'запись журнала'
 
     def revert(self, user=None):
         """Revert the change this LogRecord was caused by.
