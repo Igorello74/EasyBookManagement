@@ -1,10 +1,12 @@
 from django import forms
 from django.contrib import admin
-from django.db.models import Sum, Count, F
+from django.db.models import Count, F, Sum
+
+from operationsLog.admin import LoggedModelAdmin
+from utils import format_currency
 
 from . import models
 from .widgets import DateInput
-from utils import format_currency
 
 
 class InventoryItemInline(admin.TabularInline):
@@ -19,7 +21,7 @@ class InventoryItemInline(admin.TabularInline):
 
 
 @admin.register(models.Invoice)
-class InvoiceAdmin(admin.ModelAdmin):
+class InvoiceAdmin(LoggedModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.annotate(
@@ -67,7 +69,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.InventoryItem)
-class InventoryItemAdmin(admin.ModelAdmin):
+class InventoryItemAdmin(LoggedModelAdmin):
     @admin.display(description="Сумма, ₽", ordering="sum")
     def get_sum(self, obj):
         return format_currency(obj.sum)

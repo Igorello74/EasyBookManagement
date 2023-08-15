@@ -3,11 +3,13 @@ from django.db.models import Count, Q, Sum
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from operationsLog.admin import LoggedModelAdmin
+
 from . import models
 
 
 @admin.register(models.Book)
-class BookAdmin(admin.ModelAdmin):
+class BookAdmin(LoggedModelAdmin):
     @admin.display(description="Количество купленных экземпляров")
     @mark_safe
     def get_number_of_instances(self):
@@ -79,7 +81,7 @@ class BookAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.BookInstance)
-class BookInstanceAdmin(admin.ModelAdmin):
+class BookInstanceAdmin(LoggedModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.select_related().annotate(Count("taken_by"))
@@ -153,7 +155,7 @@ class BookInstanceAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.Subject)
-class SubjectAdmin(admin.ModelAdmin):
+class SubjectAdmin(LoggedModelAdmin):
     search_fields = ["name"]
 
     def get_model_perms(self, request):

@@ -1,5 +1,7 @@
 from django.db import models
 
+from utils.cases import Cases
+
 
 class Book(models.Model):
     """
@@ -70,6 +72,8 @@ class Book(models.Model):
         ]
         verbose_name = "книга"
         verbose_name_plural = "книги"
+
+    name_cases = Cases(meta=Meta, gen="книги", gen_pl="книг")
 
 
 class Subject(models.Model):
@@ -150,3 +154,5 @@ class BookInstance(models.Model):
         ]
         verbose_name = "экземпляр книги"
         verbose_name_plural = "экземпляры книг"
+
+    name_cases = Cases(meta=Meta, gen="экземпляра книги", gen_pl="экземпляров книг")

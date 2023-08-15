@@ -3,6 +3,8 @@ import datetime
 from django.db import models
 from django.db.models import F
 
+from utils.cases import Cases
+
 
 class Invoice(models.Model):
     MAIN = "M"
@@ -29,6 +31,8 @@ class Invoice(models.Model):
     class Meta:
         verbose_name = "накладная"
         verbose_name_plural = "накладные"
+
+    name_cases = Cases(meta=Meta, gen="накладной", gen_pl="накладных")
 
 
 class InventoryItemManager(models.Manager):
@@ -63,3 +67,6 @@ class InventoryItem(models.Model):
     class Meta:
         verbose_name = "инвентарная позиция"
         verbose_name_plural = "инвентарные позиции"
+
+    name_cases = Cases(meta=Meta, gen="инвентарной позиции",
+                       gen_pl="инвентарных позиций")
