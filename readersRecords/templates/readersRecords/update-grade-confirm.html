@@ -2,45 +2,6 @@
 
 {% block extrastyle %}
   <style>
-    details {
-      border: 1px solid #bababa;
-      border-radius: 4px;
-      padding: 0.5em 0.5em 0;
-      margin-bottom: 0.8em;
-    }
-    
-    details > summary::after {
-      content: ' (нажмите, чтобы раскрыть список)';
-      font-weight: lighter;
-      color: var(--body-quiet-color);
-      font-size: 0.8em;
-      font-style: italic;
-    }
-    
-    summary {
-      font-weight: bold;
-      margin: -0.5em -0.5em 0;
-      padding: 0.5em;
-      font-size: 1.3em;
-    }
-    
-    details[open] {
-      padding: 0.5em;
-    }
-    
-    details[open] > summary::after {
-      content: none;
-    }
-    
-    details[open] > summary {
-      border-bottom: 1px solid #e1e1e1;
-      margin-bottom: 0.5em;
-    }
-    
-    details + details {
-      margin-top: -1px;
-    }
-    
     #confirm-button,
     #cancel-button {
       display: inline-block;

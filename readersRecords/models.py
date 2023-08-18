@@ -4,7 +4,8 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 
-from importExport import BulkManager
+from utils.cases import Cases
+
 
 GROUP_PATTERN = re.compile(r"(\d+).*?([а-яёa-z]+)", re.I)
 # a regexp pattern matching any string that resembles a group.
@@ -30,9 +31,7 @@ class LangField(models.CharField):
             return value
         try:
             value = str(value).lower()
-            value = self.langs_mapping.get(
-                re.search(r"\w", value).group(0), value
-            )
+            value = self.langs_mapping.get(re.search(r"\w", value).group(0), value)
         except Exception:
             value = ""
         return super().get_db_prep_save(value, connection)
@@ -108,13 +107,9 @@ class Reader(models.Model):
             return self.name
 
     def clean(self):
-        if self.role == self.STUDENT and not (
-            self.group_num or self.group_letter
-        ):
+        if self.role == self.STUDENT and not (self.group_num or self.group_letter):
             raise ValidationError("Для учеников обязательно указывать класс.")
         return super().clean()
-
-    objects = BulkManager()
 
     @staticmethod
     def format_group(group_num, group_letter):
@@ -159,3 +154,5 @@ class Reader(models.Model):
 
         verbose_name = "читатель"
         verbose_name_plural = "читатели"
+
+    name_cases = Cases(meta=Meta, gen="читателя", gen_pl="читателей")

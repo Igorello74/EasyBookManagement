@@ -21,8 +21,8 @@ class XlsxDictWriter(csv.DictWriter):
     def __init__(self, f, fieldnames, restval="", *args, **kwargs):
         self.filename = f.name
         self.extrasaction = "ignore"
-        self.fieldnames = fieldnames    # list of keys for the dict
-        self.restval = restval          # for writing short dicts
+        self.fieldnames = fieldnames  # list of keys for the dict
+        self.restval = restval  # for writing short dicts
 
         self.wb = openpyxl.Workbook()
         self.ws = self.wb.active
@@ -42,8 +42,7 @@ class XlsxDictWriter(csv.DictWriter):
             for row in self.ws.iter_rows():
                 for col_ind, cell in enumerate(row, 1):
                     if "\n" in str(cell.value):
-                        cell.alignment = openpyxl.styles.Alignment(
-                            wrap_text=True)
+                        cell.alignment = openpyxl.styles.Alignment(wrap_text=True)
                         cols_with_multilines.add(col_ind)
 
             for col in cols_with_multilines:

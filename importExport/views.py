@@ -1,11 +1,12 @@
 from datetime import datetime
 
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import QuerySet
 from django.http import FileResponse
 from django.views import View
 from django.views.generic.edit import FormView
 
-from importExport import BadFileError, InvalidDataError
+from importExport import BadFileError, InvalidDataError, base
 from utils.views import CustomAdminViewMixin
 
 from .forms import ImportForm
@@ -16,8 +17,7 @@ class ImportView(CustomAdminViewMixin, FormView):
 
     You have to set some attributes when subclassing this view:
 
-    model: the model object with default manager (objects) set to
-        an instance of the BulkManager;
+    model: the model subclass;
 
     template_name: name of the template to use when rendering this view
         (you can extend "importExport/import.html");
@@ -32,7 +32,7 @@ class ImportView(CustomAdminViewMixin, FormView):
     title: html title to be set on the import page
 
     For more information on some properties,
-    check importExport.__init__.BulkManager.import_from_file.
+    check importExport.base.import_from_file.
 
     The behaviour of importing is:
     if id is not provided in a row, a new instance is CREATED,
@@ -54,68 +54,59 @@ class ImportView(CustomAdminViewMixin, FormView):
     title = None
 
     def form_valid(self, form):
-        try:
-            assert self.model and self.headers_mapping
-            # check if the subclass is properly configured
+        if not (self.model and self.headers_mapping):
+            raise ImproperlyConfigured(
+                'You must set the "model" and "headers_mapping" attributes in the '
+                "subclass definition"
+            )
 
-            result = self.model.objects.import_from_file(
+        try:
+            result = base.import_from_file(
+                self.model,
                 self.request.FILES["file"],
                 self.headers_mapping,
                 self.ignore_errors,
                 self.virtual_fields,
+                self.request.user,
             )
+            context = self.get_context_data(**result)
 
-        except AssertionError:
-            raise ImproperlyConfigured(
-                "You must set model and"
-                " headers_mapping in the subclass definition"
-            )
-        except AttributeError:
-            raise ImproperlyConfigured(
-                "You can only use ImportView with models whose default "
-                "manager (objects) is an instance of BulkManager"
-            )
         except BadFileError:
             context = self.get_context_data(bad_format=True)
         except InvalidDataError as e:
             context = self.get_context_data(invalid=e.invalid_objs)
-        else:
-            context = self.get_context_data(**result)
 
         return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
         if not self.title:
-            self.title = (
-                f"Импортировать {self.model._meta.verbose_name.title()}"
-            )
+            self.title = f"Импортировать {self.model._meta.verbose_name.title()}"
         context = super().get_context_data(**kwargs)
-
         return context
 
 
 class ExportView(View):
     model = None
     headers_mapping = None
-    related_fields = set()
+    related_fields: set[str] = set()
     file_format = ".xlsx"
 
     @staticmethod
-    def format_related(qs) -> str:
+    def format_related(qs: QuerySet) -> str:
         raise NotImplementedError(
             "format_related method has to be implemented in the subclass"
         )
 
     def get_filename(self):
         model_name = self.model._meta.verbose_name.title()
-        return (
-            f"Экспорт {model_name} {datetime.now():%d-%m-%Y}{self.file_format}"
-        )
+        return f"Экспорт {model_name} {datetime.now():%d-%m-%Y}{self.file_format}"
 
     def get(self, request, queryset=None):
         if queryset is None:
             queryset = self.model.objects.all()
-        file_path = queryset.export_to_file(
+
+        file_path = base.export_queryset_to_file(
+            queryset,
             self.file_format,
             self.headers_mapping,
             self.related_fields,

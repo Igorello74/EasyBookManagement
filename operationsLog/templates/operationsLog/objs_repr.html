@@ -1,0 +1,8 @@
+<details {% if expanded %}open{% endif %}>
+    <summary>{{title}} ({{objs_num}} шт.)</summary>
+    <ol>
+        {% for obj in objs %}
+        <li>{{obj}}</li>
+        {% endfor %}
+    </ol>
+</details>

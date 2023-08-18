@@ -1,0 +1,24 @@
+<style>
+  del {
+    text-decoration: line-through #55555535;
+    background-color: #fdd;
+    color: #555;
+  }
+  ins {
+    text-decoration: none;
+    background-color: #d4fcbc;
+  }
+</style>
+
+<table>
+  {% for field in fields %}
+    <tr>
+      <th>{{ field.name }}</th>
+      <td>
+        <del>{{ field.old }}</del>
+        <span style="font-size: 2em;">→</span>
+        <ins>{{ field.new }}</ins>
+      </td>
+    </tr>
+  {% endfor %}
+</table>

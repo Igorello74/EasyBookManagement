@@ -3,11 +3,13 @@ from django.db.models import Count, Q, Sum
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from operationsLog.admin import LoggedModelAdmin
+
 from . import models
 
 
 @admin.register(models.Book)
-class BookAdmin(admin.ModelAdmin):
+class BookAdmin(LoggedModelAdmin):
     @admin.display(description="Количество купленных экземпляров")
     @mark_safe
     def get_number_of_instances(self):
@@ -79,7 +81,7 @@ class BookAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.BookInstance)
-class BookInstanceAdmin(admin.ModelAdmin):
+class BookInstanceAdmin(LoggedModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.select_related().annotate(Count("taken_by"))
@@ -93,9 +95,7 @@ class BookInstanceAdmin(admin.ModelAdmin):
             return f"{taken_by_num} читателями"
         elif taken_by_num == 1:
             reader = obj.taken_by.first()
-            href = reverse(
-                "admin:readersRecords_reader_change", args=(reader.id,)
-            )
+            href = reverse("admin:readersRecords_reader_change", args=(reader.id,))
             return f'<a href="{href}">{reader}</a>'
         else:
             return "нет"
@@ -108,9 +108,7 @@ class BookInstanceAdmin(admin.ModelAdmin):
         )
         if taken_by:
             for ind, reader in enumerate(taken_by):
-                href = reverse(
-                    "admin:readersRecords_reader_change", args=(reader.id,)
-                )
+                href = reverse("admin:readersRecords_reader_change", args=(reader.id,))
                 taken_by[ind] = f'<a href="{href}">{reader}</a>'
 
             if len(taken_by) > 1:
@@ -157,7 +155,7 @@ class BookInstanceAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.Subject)
-class SubjectAdmin(admin.ModelAdmin):
+class SubjectAdmin(LoggedModelAdmin):
     search_fields = ["name"]
 
     def get_model_perms(self, request):

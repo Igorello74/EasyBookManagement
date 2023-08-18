@@ -4,6 +4,7 @@ from django.db.models import Count
 from django.db.models.functions import Concat
 from django.urls import reverse_lazy
 
+from operationsLog.admin import LoggedModelAdmin
 from readersRecords.admin_filters import GroupFilter
 from readersRecords.forms import ReaderAdminForm
 from readersRecords.models import Reader
@@ -23,7 +24,7 @@ def change_group_action(modeladmin, request, queryset):
 
 
 @admin.register(Reader)
-class ReaderAdmin(ModelAdminWithTools):
+class ReaderAdmin(ModelAdminWithTools, LoggedModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.annotate(Count("books"))
@@ -38,9 +39,7 @@ class ReaderAdmin(ModelAdminWithTools):
         )
         return super().get_search_results(request, queryset, search_term)
 
-    @admin.display(
-        description="Количество взятых книг", ordering="books__count"
-    )
+    @admin.display(description="Количество взятых книг", ordering="books__count")
     def get_books_num(self):
         return self.books__count
 
@@ -71,9 +70,7 @@ class ReaderAdmin(ModelAdminWithTools):
             },
         ),
     )
-    formfield_overrides = {
-        models.ManyToManyField: {"widget": ChoicesjsTextWidget}
-    }
+    formfield_overrides = {models.ManyToManyField: {"widget": ChoicesjsTextWidget}}
 
     list_filter = ("role", GroupFilter)
     list_per_page = 250

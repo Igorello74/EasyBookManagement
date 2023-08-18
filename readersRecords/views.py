@@ -14,6 +14,8 @@ from django.views.generic import TemplateView
 
 from importExport import VirtualField
 from importExport.views import ExportView, ImportView
+from operationsLog.backup import create_backup
+from operationsLog.models import LogRecord
 from utils.views import CustomAdminViewMixin
 
 from .models import Reader
@@ -41,9 +43,7 @@ class ReaderImportView(ImportView):
     title = "Добавить читателей из файла"
     allow_update = False
     virtual_fields = {
-        "group": VirtualField(
-            reader_group_setter, ["group_num", "group_letter"]
-        )
+        "group": VirtualField(reader_group_setter, ["group_num", "group_letter"])
     }
 
 
@@ -88,7 +88,7 @@ def get_item(dictionary, key):
 )
 class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
     model = Reader
-    view_name = "Изменить класс учеников"
+    title = "Изменить класс учеников"
     template_name = "readersRecords/change-group.html"
 
     def render_and_get_context(self, context, **response_kwargs):
@@ -103,9 +103,7 @@ class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
             return self.render_and_get_context({"students": queryset})
 
         else:
-            queryset = Reader.objects.filter(
-                id__in=request.POST.getlist("students")
-            )
+            queryset = Reader.objects.filter(id__in=request.POST.getlist("students"))
 
             if not request.POST.get("group"):
                 messages.error(
@@ -114,7 +112,21 @@ class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
                 return self.render_and_get_context({"students": queryset})
 
             parsed = Reader._parse_group(request.POST["group"])
-            queryset.update(group_num=parsed.num, group_letter=parsed.letter)
+
+            backup_filename = create_backup("change-group")
+            LogRecord.objects.log_bulk_update(
+                queryset,
+                request.user,
+                f"перевод {len(queryset)} учеников в {parsed.num}{parsed.letter} класс",
+                ["group_num", "group_letter"],
+                backup_filename,
+            )
+            updated = queryset.update(group_num=parsed.num, group_letter=parsed.letter)
+            messages.success(
+                request,
+                f"{updated} учеников были переведены "
+                f"в {parsed.num}{parsed.letter} класс."
+            )
             return redirect("admin:readersRecords_reader_changelist")
 
 
@@ -125,9 +137,7 @@ class ChangeStudentsGroupView(CustomAdminViewMixin, TemplateView):
 class UpdateStudentsGradeView(View):
     def get(self, request, *args, **kwargs):
         students = Reader.objects.filter(role=Reader.STUDENT)
-        graduating = students.filter(
-            group_num__gte=settings.READERSRECORDS_MAX_GRADE
-        )
+        graduating = students.filter(group_num__gte=settings.READERSRECORDS_MAX_GRADE)
         non_graduating = students.filter(
             group_num__lt=settings.READERSRECORDS_MAX_GRADE
         )
@@ -157,6 +167,23 @@ class UpdateStudentsGradeView(View):
                     "has_view_permission": True,
                     "graduating": graduating,
                 },
+            )
+
+        backup_filename = create_backup("update-grade")
+        if non_graduating:
+            LogRecord.objects.log_bulk_update(
+                non_graduating,
+                request.user,
+                f"перевод {len(non_graduating)} учеников в следующий класс",
+                ["group_num"],
+                backup_filename,
+            )
+        if graduating:
+            LogRecord.objects.log_bulk_delete(
+                graduating,
+                request.user,
+                f"выпуск {len(graduating)} учеников",
+                backup_filename,
             )
 
         with atomic():

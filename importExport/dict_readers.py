@@ -6,19 +6,17 @@ yielding dicts with data from the current row. An example: csv.DictReader
 
 import csv
 import pathlib
+from io import TextIOWrapper
 
 from openpyxl import load_workbook
+from importExport import BadFileError
 
 from utils import ObjectFactory
 
 
-class BadFileError(Exception):
-    ...
-
-
 class XlsxDictReader:
     def __init__(self, f, fieldnames=None, *args, **kwds):
-        self._fieldnames = fieldnames   # list of keys for the dict
+        self._fieldnames = fieldnames  # list of keys for the dict
         self.reader = load_workbook(
             f, read_only=True, data_only=True, *args, **kwds
         ).active.iter_rows(values_only=True)
@@ -57,16 +55,15 @@ class XlsxDictReader:
 
 
 class CsvDictReader(csv.DictReader):
-
-    def __init__(self, f, encoding="utf-8", *args, **kwargs):
+    def __init__(self, f, *, encoding="utf-8", dialect=None, **kwargs):
         if encoding:
-            f = self._decode_file(f, encoding)
-        super().__init__(f, *args, **kwargs)
+            f = TextIOWrapper(f, encoding, "replace")
 
-    @staticmethod
-    def _decode_file(file, encoding='utf-8'):
-        for i in file:
-            yield i.decode(encoding, "replace")
+        if dialect is None:
+            dialect = csv.Sniffer().sniff(f.read(256), ",;\t")
+            f.seek(0)
+        dialect = dialect or csv.excel
+        super().__init__(f, dialect=dialect, **kwargs)
 
     @property
     def fieldnames(self):
@@ -89,8 +86,7 @@ class DictReaderFactory(ObjectFactory):
         try:
             return super().get(key=file_extension, f=file, **kwargs)
         except ValueError:
-            raise BadFileError(
-                f"We can't read that format yet: {file_extension}")
+            raise BadFileError(f"We can't read that format yet: {file_extension}")
         except Exception:
             raise BadFileError("Invalid file")
 
