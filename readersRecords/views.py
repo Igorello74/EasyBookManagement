@@ -69,7 +69,7 @@ class ReaderExportView(ExportView):
         result = []
         for count, i in enumerate(qs.select_related("book"), 1):
             author = Truncator(i.book.authors).words(1)
-            result.append(f"{count}. {i.book.name} ({author}) — [{i.barcode}]")
+            result.append(f"{count}. {i.book.name} ({author}) — [{i.id}]")
 
         return "\n".join(result)
 

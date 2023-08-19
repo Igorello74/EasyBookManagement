@@ -133,7 +133,7 @@ class BookInstanceAdmin(LoggedModelAdmin):
         return obj.book.authors
 
     list_display = (
-        "barcode",
+        "id",
         "get_book_name_with_link",
         "represents_multiple",
         "status",
@@ -144,14 +144,14 @@ class BookInstanceAdmin(LoggedModelAdmin):
     radio_fields = {"represents_multiple": admin.VERTICAL}
     fields = (
         "status",
-        "barcode",
+        "id",
         "book",
         "represents_multiple",
         "notes",
         "get_taken_by_verbose",
     )
     autocomplete_fields = ["book"]
-    search_fields = ("barcode", "book__name", "book__authors")
+    search_fields = ("id", "book__name", "book__authors")
 
 
 @admin.register(models.Subject)

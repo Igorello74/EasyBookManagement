@@ -17,13 +17,13 @@ def get_bookInstance_info(request, ids: str):
         if not taken_by:
             taken_by = None
 
-        resp[i.barcode] = {
-            "id": i.barcode,
+        resp[i.id] = {
+            "id": i.id,
             "name": i.book.name,
             "authors": i.book.authors,
             "status": BookInstance.get_status_code(i.status),
             "admin_url": reverse(
-                "admin:booksRecords_bookinstance_change", args=(i.barcode,)
+                "admin:booksRecords_bookinstance_change", args=(i.id,)
             ),
             "taken_by": taken_by,
         }
@@ -36,7 +36,7 @@ def get_bookInstance_info(request, ids: str):
                     "error": "Not found",
                     "admin_url": "{admin_link}?{data}".format(
                         admin_link=reverse("admin:booksRecords_bookinstance_add"),
-                        data=urlencode({"barcode": id}),
+                        data=urlencode({"id": id}),
                     ),
                 },
             )

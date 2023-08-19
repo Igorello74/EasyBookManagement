@@ -106,11 +106,11 @@ class BookInstance(models.Model):
     каждый экземпляр.
     """
 
-    barcode = models.CharField(
+    id = models.CharField(
         primary_key=True,
         unique=True,
         max_length=30,
-        verbose_name="Штрихкод",
+        verbose_name="Код",
         help_text="идентификатор книги, уникальный для каждого "
         "экземпляра; совпадает с номером штрихкода на наклейке",
     )
@@ -141,7 +141,7 @@ class BookInstance(models.Model):
     )
 
     def __str__(self):
-        return f"#{self.barcode} · {self.book}"
+        return f"#{self.id} · {self.book}"
 
     @classmethod
     def get_status_code(cls, status):
