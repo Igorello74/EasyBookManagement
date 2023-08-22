@@ -15,8 +15,6 @@ class BookAdmin(LoggedModelAdmin):
     def get_number_of_instances(self):
         result = []
         result.append(str(self.num_purchased or 0))
-        if self.num_individual:
-            result.append(f"({self.num_individual} индивидуальных)")
 
         return (
             '<a href="{href}?book_id={book_id}" '
@@ -40,10 +38,6 @@ class BookAdmin(LoggedModelAdmin):
                 "bookinstance", filter=Q(bookinstance__taken_by__isnull=False)
             ),
             num_purchased=Sum("inventory_items__num_bought", distinct=True),
-            num_individual=Count(
-                "bookinstance",
-                filter=Q(bookinstance__represents_multiple=False),
-            ),
         )
         return qs
 
