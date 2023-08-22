@@ -19,7 +19,8 @@ class UnicodeJSONEncoder(DjangoJSONEncoder):
         kwargs["ensure_ascii"] = False
         super().__init__(*args, **kwargs)
 
-
+def get_backup_dir():
+    return settings.BACKUP_DIR
 class LogRecord(models.Model):
     Operation = _Operation
 
@@ -66,7 +67,7 @@ class LogRecord(models.Model):
 
     backup_file = models.FilePathField(
         "резервная копия",
-        path=settings.BACKUP_DIR,
+        path=get_backup_dir,
         allow_files=False,
         allow_folders=True,
         blank=True,
