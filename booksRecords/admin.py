@@ -52,7 +52,6 @@ class BookAdmin(LoggedModelAdmin):
         "authors",
         "subject__name",
         "grade",
-        "isbn",
     ]
 
     list_display = (
@@ -69,11 +68,7 @@ class BookAdmin(LoggedModelAdmin):
 
     fieldsets = (
         ("Основная информация", {"fields": ("name", "authors")}),
-        (
-            "Информация об издании",
-            {"fields": ("publisher", "city", "year", "edition")},
-        ),
-        ("Идентификаторы", {"fields": ("isbn",)}),
+        ("Информация об издании", {"fields": ("publisher", "city")}),
         ("Учебная информация", {"fields": ("grade", "subject")}),
     )
 
@@ -135,18 +130,17 @@ class BookInstanceAdmin(LoggedModelAdmin):
     list_display = (
         "id",
         "get_book_name_with_link",
-        "represents_multiple",
         "status",
         "get_taken_by",
     )
     readonly_fields = ("get_taken_by_verbose",)
-    list_filter = ("represents_multiple", "status", "book__grade")
-    radio_fields = {"represents_multiple": admin.VERTICAL}
+    list_filter = ("status", "book__grade")
     fields = (
-        "status",
         "id",
         "book",
-        "represents_multiple",
+        "publication_year",
+        "edition",
+        "status",
         "notes",
         "get_taken_by_verbose",
     )
